@@ -33,9 +33,9 @@ Each layer may ONLY import from lower-numbered layers.
 2. db/           → SQLite init (depends on config)
 3. converters/   → format conversion (pure functions, no deps on services/db)
 4. services/     → business logic (depends on db, utils, converters)
-5. controllers/  → request handlers (depends on services)
-6. routes/       → HTTP routes, middleware assembly (depends on controllers)
-7. middleware/   → auth, rate-limit (depends on services for user lookup)
+5. middleware/   → auth, rate-limit (depends on services for user lookup)
+6. controllers/  → request handlers (depends on services)
+7. routes/       → HTTP routes, middleware assembly (depends on controllers, middleware)
 8. index.ts      → Express bootstrap (depends on routes)
 ```
 

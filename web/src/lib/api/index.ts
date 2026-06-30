@@ -92,3 +92,17 @@ export async function confirmQqBind(token: string) {
     token,
   })
 }
+
+export async function unbindQq(token: string) {
+  return apiRequest<{ message: string }>('/user/bind/qq', {
+    method: 'DELETE',
+    token,
+  })
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  await apiRequest('/auth/reset-password', {
+    method: 'POST',
+    body: { email, code, newPassword },
+  })
+}

@@ -22,7 +22,9 @@ function getTransporter(): nodemailer.Transporter | null {
 export async function sendVerificationCode(email: string, code: string): Promise<boolean> {
   const t = getTransporter()
   if (!t) {
-    console.log(`[DEV] Verification code for ${email}: ${code}`)
+    if (process.env.LOG_VERIFICATION_CODES !== 'false') {
+      console.log(`[DEV] Verification code for ${email}: ${code}`)
+    }
     return true
   }
 

@@ -1,5 +1,6 @@
 import db from '../db/index.js'
 import { generateApiKey } from '../utils/crypto.js'
+import { getRow, allRows } from '../db/helpers.js'
 
 export interface ApiKeyRow {
   id: number
@@ -36,12 +37,12 @@ export function createApiKey(userId: number, name = ''): ApiKeyPublic & { fullKe
   const result = db.prepare('INSERT INTO api_keys (user_id, key, name) VALUES (?, ?, ?)')
     .run(userId, key, name)
 
-  const row = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(Number(result.lastInsertRowid)) as ApiKeyRow
+  const row = getRow<ApiKeyRow>(db.prepare('SELECT * FROM api_keys WHERE id = ?'), Number(result.lastInsertRowid))!
   return { ...toPublic(row), fullKey: row.key }
 }
 
 export function listApiKeys(userId: number): ApiKeyPublic[] {
-  const rows = db.prepare('SELECT * FROM api_keys WHERE user_id = ? ORDER BY id DESC').all(userId) as ApiKeyRow[]
+  const rows = allRows<ApiKeyRow>(db.prepare('SELECT * FROM api_keys WHERE user_id = ? ORDER BY id DESC'), userId)
   return rows.map(toPublic)
 }
 
@@ -58,7 +59,7 @@ export function updateApiKey(id: number, userId: number, fields: Partial<{ name:
   vals.push(id, userId)
 
   db.prepare(`UPDATE api_keys SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...vals)
-  const row = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(id) as ApiKeyRow | undefined
+  const row = getRow<ApiKeyRow>(db.prepare('SELECT * FROM api_keys WHERE id = ?'), id)
   return row ? toPublic(row) : undefined
 }
 
@@ -68,5 +69,5 @@ export function deleteApiKey(id: number, userId: number): boolean {
 }
 
 export function getApiKeyByValue(key: string): (ApiKeyRow & { user_id: number }) | undefined {
-  return db.prepare('SELECT * FROM api_keys WHERE key = ?').get(key) as (ApiKeyRow & { user_id: number }) | undefined
+  return getRow<ApiKeyRow & { user_id: number }>(db.prepare('SELECT * FROM api_keys WHERE key = ?'), key)
 }

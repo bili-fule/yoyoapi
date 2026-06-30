@@ -1,4 +1,5 @@
 import db from '../db/index.js'
+import { getRow, allRows } from '../db/helpers.js'
 
 export interface ChannelRow {
   id: number
@@ -62,17 +63,17 @@ export function createChannel(input: ChannelCreate): ChannelPublic {
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(input.name, input.type ?? 'openai', input.baseUrl, input.apiKey, modelsJson, input.priority ?? 1)
 
-  const row = db.prepare('SELECT * FROM channels WHERE id = ?').get(Number(result.lastInsertRowid)) as ChannelRow
+  const row = getRow<ChannelRow>(db.prepare('SELECT * FROM channels WHERE id = ?'), Number(result.lastInsertRowid))!
   return toPublic(row)
 }
 
 export function listChannels(): ChannelPublic[] {
-  const rows = db.prepare('SELECT * FROM channels ORDER BY priority DESC, id ASC').all() as ChannelRow[]
+  const rows = allRows<ChannelRow>(db.prepare('SELECT * FROM channels ORDER BY priority DESC, id ASC'))
   return rows.map(toPublic)
 }
 
 export function getChannelById(id: number): ChannelRow | undefined {
-  return db.prepare('SELECT * FROM channels WHERE id = ?').get(id) as ChannelRow | undefined
+  return getRow<ChannelRow>(db.prepare('SELECT * FROM channels WHERE id = ?'), id)
 }
 
 export function updateChannel(id: number, input: ChannelUpdate): ChannelPublic | undefined {
@@ -101,7 +102,7 @@ export function updateChannel(id: number, input: ChannelUpdate): ChannelPublic |
 
   vals.push(id)
   db.prepare(`UPDATE channels SET ${sets.join(', ')} WHERE id = ?`).run(...vals)
-  const row = db.prepare('SELECT * FROM channels WHERE id = ?').get(id) as ChannelRow | undefined
+  const row = getRow<ChannelRow>(db.prepare('SELECT * FROM channels WHERE id = ?'), id)
   return row ? toPublic(row) : undefined
 }
 
@@ -111,6 +112,5 @@ export function deleteChannel(id: number): boolean {
 }
 
 export function getEnabledChannelsByType(type: string): ChannelRow[] {
-  return db.prepare('SELECT * FROM channels WHERE status = 1 AND type = ? ORDER BY priority DESC, id ASC')
-    .all(type) as ChannelRow[]
+  return allRows<ChannelRow>(db.prepare('SELECT * FROM channels WHERE status = 1 AND type = ? ORDER BY priority DESC, id ASC'), type)
 }

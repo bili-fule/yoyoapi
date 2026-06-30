@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import db from '../db/index.js'
 import { AuthError, ForbiddenError } from '../utils/errors.js'
+import { getRow } from '../db/helpers.js'
 
 export interface AuthUser {
   id: number
@@ -21,6 +22,8 @@ declare global {
   }
 }
 
+export type AuthenticatedRequest = Request & { user: AuthUser; apiKeyId: number }
+
 export function tokenAuth(req: Request, _res: Response, next: NextFunction): void {
   const auth = req.headers.authorization
   if (!auth || !auth.startsWith('Bearer ')) {
@@ -28,16 +31,16 @@ export function tokenAuth(req: Request, _res: Response, next: NextFunction): voi
   }
 
   const token = auth.slice(7)
-  const row = db.prepare(`
+  const row = getRow<{
+    id: number; email: string; role: number; display_name: string
+    quota: number; used_quota: number; qq_id: string; api_key_id: number
+  }>(db.prepare(`
     SELECT u.id, u.email, u.role, u.display_name, u.quota, u.used_quota, u.qq_id,
            ak.id as api_key_id
     FROM api_keys ak
     JOIN users u ON u.id = ak.user_id
     WHERE ak.key = ? AND ak.status = 1
-  `).get(token) as {
-    id: number; email: string; role: number; display_name: string
-    quota: number; used_quota: number; qq_id: string; api_key_id: number
-  } | undefined
+  `), token)
 
   if (!row) {
     throw new AuthError('Invalid or disabled API key')

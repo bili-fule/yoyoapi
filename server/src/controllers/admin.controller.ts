@@ -3,6 +3,7 @@ import { z } from 'zod'
 import * as userService from '../services/user.service.js'
 import * as channelService from '../services/channel.service.js'
 import db from '../db/index.js'
+import { getRow } from '../db/helpers.js'
 
 export function listUsers(req: Request, res: Response): void {
   const page = parseInt(req.query.page as string) || 1
@@ -120,15 +121,15 @@ export function getLogs(req: Request, res: Response): void {
   query += ' ORDER BY id DESC LIMIT ? OFFSET ?'
   params.push(pageSize, (page - 1) * pageSize)
 
-  const total = (db.prepare('SELECT COUNT(*) as c FROM logs' + (userId ? ' WHERE user_id = ?' : '')).get(...(userId ? [userId] : [])) as { c: number }).c
+  const total = getRow<{ c: number }>(db.prepare('SELECT COUNT(*) as c FROM logs' + (userId ? ' WHERE user_id = ?' : '')), ...(userId ? [userId] : []))!.c
   const logs = db.prepare(query).all(...params)
 
   res.json({ logs, total })
 }
 
 export function getStats(_req: Request, res: Response): void {
-  const totalUsers = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c
-  const todayUsage = (db.prepare("SELECT COALESCE(SUM(quota_cost), 0) as c FROM logs WHERE created_at >= datetime('now', 'start of day')").get() as { c: number }).c
+  const totalUsers = getRow<{ c: number }>(db.prepare('SELECT COUNT(*) as c FROM users'))!.c
+  const todayUsage = getRow<{ c: number }>(db.prepare("SELECT COALESCE(SUM(quota_cost), 0) as c FROM logs WHERE created_at >= datetime('now', 'start of day')"))!.c
 
   res.json({
     totalUsers,

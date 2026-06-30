@@ -11,7 +11,6 @@ export const config = {
   port: parseInt(env('PORT', '3001'), 10),
   host: env('HOST', '0.0.0.0'),
   dbPath: env('DB_PATH', resolve(__dirname, '..', 'data', 'yoyoapi.db')),
-  jwtSecret: env('JWT_SECRET', 'dev-secret'),
   smtp: {
     host: env('SMTP_HOST'),
     port: parseInt(env('SMTP_PORT', '587'), 10),

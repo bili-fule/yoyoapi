@@ -1,5 +1,6 @@
 import db from '../db/index.js'
 import { hashPassword } from '../utils/crypto.js'
+import { getRow, allRows } from '../db/helpers.js'
 
 export interface UserRow {
   id: number
@@ -50,16 +51,16 @@ export async function createUser(email: string, password: string, displayName?: 
     VALUES (?, ?, ?)
   `).run(email, passwordHash, displayName || email.split('@')[0]!)
 
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(result.lastInsertRowid)) as UserRow
+  const user = getRow<UserRow>(db.prepare('SELECT * FROM users WHERE id = ?'), Number(result.lastInsertRowid))!
   return toPublic(user)
 }
 
 export function getUserByEmail(email: string): UserRow | undefined {
-  return db.prepare('SELECT * FROM users WHERE email = ?').get(email) as UserRow | undefined
+  return getRow<UserRow>(db.prepare('SELECT * FROM users WHERE email = ?'), email)
 }
 
 export function getUserById(id: number): UserRow | undefined {
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined
+  return getRow<UserRow>(db.prepare('SELECT * FROM users WHERE id = ?'), id)
 }
 
 export function updateUser(id: number, fields: Partial<{ display_name: string; role: number; quota: number; qq_id: string }>): UserPublic | undefined {
@@ -77,14 +78,13 @@ export function updateUser(id: number, fields: Partial<{ display_name: string; r
   vals.push(id)
 
   db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...vals)
-  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined
+  const row = getRow<UserRow>(db.prepare('SELECT * FROM users WHERE id = ?'), id)
   return row ? toPublic(row) : undefined
 }
 
 export function listUsers(page = 1, pageSize = 20): { users: UserPublic[]; total: number } {
-  const total = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c
-  const rows = db.prepare('SELECT * FROM users ORDER BY id DESC LIMIT ? OFFSET ?')
-    .all(pageSize, (page - 1) * pageSize) as UserRow[]
+  const total = getRow<{ c: number }>(db.prepare('SELECT COUNT(*) as c FROM users'))!.c
+  const rows = allRows<UserRow>(db.prepare('SELECT * FROM users ORDER BY id DESC LIMIT ? OFFSET ?'), pageSize, (page - 1) * pageSize)
 
   return { users: rows.map(toPublic), total }
 }

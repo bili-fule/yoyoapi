@@ -1,7 +1,7 @@
 <script lang="ts">
   import { auth } from '$lib/stores/auth.js'
   import { onMount } from 'svelte'
-  import { getProfile, listApiKeys, createApiKey, deleteApiKey } from '$lib/api/index.js'
+  import { getProfile, listApiKeys, createApiKey, deleteApiKey, getQqBindCode, confirmQqBind, unbindQq } from '$lib/api/index.js'
 
   let { data, activeTab: tab } = $props()
 
@@ -12,6 +12,12 @@
   let apiKeys = $state<{ id: number; keyPrefix: string; name: string; status: number; lastUsedAt: string | null }[]>([])
   let loading = $state(true)
   let newKeyName = $state('')
+  let qqLoading = $state(false)
+  let qqError = $state('')
+  let qqSuccess = $state('')
+  let qqCode = $state('')
+  let qqExpire = $state(0)
+  let showQqCode = $state(false)
 
   onMount(async () => {
     if (!$auth.token) return
@@ -47,6 +53,57 @@
       apiKeys = apiKeys.filter(k => k.id !== id)
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  async function handleGetQqCode() {
+    if (!$auth.token) return
+    qqError = ''
+    qqSuccess = ''
+    qqLoading = true
+    try {
+      const res = await getQqBindCode($auth.token)
+      qqCode = res.code
+      qqExpire = res.expire_seconds
+      showQqCode = true
+    } catch (err) {
+      qqError = err instanceof Error ? err.message : 'Failed to get bind code'
+    } finally {
+      qqLoading = false
+    }
+  }
+
+  async function handleConfirmQqBind() {
+    if (!$auth.token) return
+    qqError = ''
+    qqSuccess = ''
+    qqLoading = true
+    try {
+      const res = await confirmQqBind($auth.token)
+      if (profile) profile.qq_id = res.qq_id
+      qqSuccess = res.message
+      showQqCode = false
+      qqCode = ''
+    } catch (err) {
+      qqError = err instanceof Error ? err.message : 'Failed to confirm bind'
+    } finally {
+      qqLoading = false
+    }
+  }
+
+  async function handleUnbindQq() {
+    if (!$auth.token) return
+    qqError = ''
+    qqSuccess = ''
+    qqLoading = true
+    try {
+      const res = await unbindQq($auth.token)
+      if (profile) profile.qq_id = ''
+      qqSuccess = res.message
+    } catch (err) {
+      qqError = err instanceof Error ? err.message : 'Failed to unbind QQ'
+    } finally {
+      qqLoading = false
     }
   }
 
@@ -102,7 +159,38 @@
   {#if tab === 'Settings'}
     <div class="card">
       <h3>Settings</h3>
-      <p class="hint">More settings coming soon.</p>
+      <div class="qq-section">
+        <h4>QQ Bind</h4>
+        {#if qqError}
+          <div class="error">{qqError}</div>
+        {/if}
+        {#if qqSuccess}
+          <div class="success">{qqSuccess}</div>
+        {/if}
+        {#if profile?.qq_id}
+          <div class="field">
+            <span class="label">QQ Bound</span>
+            <span>{profile.qq_id}</span>
+          </div>
+          <button onclick={handleUnbindQq} disabled={qqLoading} class="danger">
+            {qqLoading ? 'Unbinding...' : 'Unbind'}
+          </button>
+        {:else if showQqCode}
+          <div class="code-box">
+            <span class="code">{qqCode}</span>
+            <p class="hint">Send this code to the QQ bot</p>
+            <p class="hint">Expires in {qqExpire} seconds</p>
+          </div>
+          <button onclick={handleConfirmQqBind} disabled={qqLoading}>
+            {qqLoading ? 'Confirming...' : 'Confirm Bind'}
+          </button>
+        {:else}
+          <p class="hint">Bind your QQ account for additional security.</p>
+          <button onclick={handleGetQqCode} disabled={qqLoading}>
+            {qqLoading ? 'Loading...' : 'Bind QQ'}
+          </button>
+        {/if}
+      </div>
     </div>
   {/if}
 {/if}
@@ -178,6 +266,58 @@
   }
   .hint {
     color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .qq-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .qq-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .qq-section button:not(.danger) {
+    padding: 0.6rem 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    align-self: flex-start;
+  }
+  .qq-section button:disabled {
+    opacity: 0.6;
+  }
+  .code-box {
+    background: #f5f5f5;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+  .code {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.15rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+  }
+  .error {
+    background: #fef2f2;
+    color: var(--error);
+    padding: 0.7rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+  .success {
+    background: #f0fdf4;
+    color: var(--success);
+    padding: 0.7rem;
+    border-radius: var(--radius);
     font-size: 0.9rem;
   }
 </style>

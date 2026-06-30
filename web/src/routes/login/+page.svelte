@@ -46,6 +46,9 @@
       {loading ? 'Signing in...' : 'Sign In'}
     </button>
     <p class="hint">
+      <a href="/reset-password">Forgot password?</a>
+    </p>
+    <p class="hint">
       Don't have an account? <a href="/register">Register</a>
     </p>
   </form>

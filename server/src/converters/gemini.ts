@@ -50,7 +50,6 @@ export function openaiToGeminiRequest(
   oaiReq: OpenAIRequest,
   modelMap?: ModelMap,
 ): GeminiRequest {
-  const map = modelMap ?? DEFAULT_MODEL_MAP
   const { contents, systemInstruction } = openAIMessagesToGeminiContents(oaiReq.messages)
 
   return {

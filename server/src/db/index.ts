@@ -49,16 +49,6 @@ export function initDB(): void {
       created_at TEXT DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS format_routes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      source_format TEXT NOT NULL,
-      target_format TEXT NOT NULL,
-      channel_id INTEGER NOT NULL,
-      model_mapping TEXT DEFAULT '{}',
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (channel_id) REFERENCES channels(id)
-    );
-
     CREATE TABLE IF NOT EXISTS verify_codes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL,

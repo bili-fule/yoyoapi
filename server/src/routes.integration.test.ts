@@ -8,11 +8,10 @@ import db from './db/index.js'
 import { hashPassword, generateApiKey } from './utils/crypto.js'
 
 let app: express.Express
-let adminApp: express.Express
 
 function cleanDB(): void {
   db.pragma('foreign_keys = OFF')
-  for (const t of ['logs', 'verify_codes', 'format_routes', 'api_keys', 'channels', 'users']) {
+  for (const t of ['logs', 'verify_codes', 'api_keys', 'channels', 'users']) {
     db.prepare(`DELETE FROM ${t}`).run()
   }
   db.pragma('foreign_keys = ON')

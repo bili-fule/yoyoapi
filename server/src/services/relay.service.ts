@@ -2,6 +2,7 @@ import db from '../db/index.js'
 import { getChannelById } from './channel.service.js'
 import { convertRequest, convertResponse } from '../converters/index.js'
 import type { OpenAIRequest, OpenAIResponse, TargetFormat } from '../converters/types.js'
+import { AuthError } from '../utils/errors.js'
 
 export interface RelayOptions {
   apiKeyId: number
@@ -10,6 +11,10 @@ export interface RelayOptions {
   channelId: number
   model: string
 }
+
+export type RelayResult =
+  | { response: OpenAIResponse; usage: { promptTokens: number; completionTokens: number } }
+  | { stream: Response; model: string; targetFormat: TargetFormat }
 
 function buildUpstreamUrl(baseUrl: string, format: TargetFormat, model: string): string {
   switch (format) {
@@ -44,38 +49,41 @@ function buildUpstreamHeaders(format: TargetFormat, channelApiKey: string): Reco
   return headers
 }
 
-async function relayToUpstream(
-  url: string,
-  headers: Record<string, string>,
-  body: unknown,
-  stream: boolean,
-): Promise<Response> {
+async function relayToUpstream(url: string, headers: Record<string, string>, body: unknown): Promise<Response> {
   return fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
-    ...(stream ? {} : {}),
   })
 }
 
 export async function relayChatCompletion(
   oaiReq: OpenAIRequest,
   options: RelayOptions,
-): Promise<{ response: OpenAIResponse; usage: { promptTokens: number; completionTokens: number } }> {
+): Promise<RelayResult> {
   const channel = getChannelById(options.channelId)
   if (!channel) throw new Error('Channel not found')
   if (channel.status !== 1) throw new Error('Channel disabled')
+
+  const userRow = db.prepare('SELECT quota, used_quota FROM users WHERE id = ?').get(options.userId) as { quota: number; used_quota: number } | undefined
+  if (userRow && userRow.quota > 0 && userRow.used_quota >= userRow.quota) {
+    throw new AuthError('Quota exceeded')
+  }
 
   const { body: convertedBody, format } = convertRequest(oaiReq, options.targetFormat)
 
   const upstreamUrl = buildUpstreamUrl(channel.base_url, format, options.model)
   const upstreamHeaders = buildUpstreamHeaders(format, channel.api_key)
 
-  const resp = await relayToUpstream(upstreamUrl, upstreamHeaders, convertedBody, oaiReq.stream ?? false)
+  const resp = await relayToUpstream(upstreamUrl, upstreamHeaders, convertedBody)
 
   if (!resp.ok) {
     const errorText = await resp.text()
     throw new Error(`Upstream error ${resp.status}: ${errorText}`)
+  }
+
+  if (oaiReq.stream) {
+    return { stream: resp, model: oaiReq.model, targetFormat: options.targetFormat }
   }
 
   const rawBody = await resp.json()
@@ -83,6 +91,8 @@ export async function relayChatCompletion(
 
   const promptTokens = oaiResponse.usage?.prompt_tokens ?? 0
   const completionTokens = oaiResponse.usage?.completion_tokens ?? 0
+
+  deductQuota(options.userId, promptTokens, completionTokens)
 
   logUsage({
     userId: options.userId,
@@ -101,7 +111,7 @@ export async function relayChatCompletion(
   }
 }
 
-interface LogEntry {
+export interface LogEntry {
   userId: number
   apiKeyId: number
   channelId: number
@@ -113,7 +123,12 @@ interface LogEntry {
   errorMsg?: string
 }
 
-function logUsage(entry: LogEntry): void {
+export function deductQuota(userId: number, promptTokens: number, completionTokens: number): void {
+  const quotaCost = promptTokens + completionTokens * 3
+  db.prepare('UPDATE users SET used_quota = used_quota + ? WHERE id = ?').run(quotaCost, userId)
+}
+
+export function logUsage(entry: LogEntry): void {
   db.prepare(`
     INSERT INTO logs (user_id, api_key_id, channel_id, model, target_format, prompt_tokens, completion_tokens, quota_cost, success, error_msg)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

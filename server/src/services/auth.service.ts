@@ -1,5 +1,6 @@
 import db from '../db/index.js'
 import { hashPassword, verifyPassword, generateCode } from '../utils/crypto.js'
+import { getRow } from '../db/helpers.js'
 import { sendVerificationCode } from '../utils/email.js'
 import { createUser, getUserByEmail, getUserById, updatePassword } from './user.service.js'
 import { createApiKey } from './api-key.service.js'
@@ -26,8 +27,7 @@ export async function login(email: string, password: string) {
   const ok = await verifyPassword(password, user.password_hash)
   if (!ok) throw new Error('Invalid email or password')
 
-  const keys = db.prepare('SELECT key FROM api_keys WHERE user_id = ? AND status = 1 LIMIT 1')
-    .get(user.id) as { key: string } | undefined
+  const keys = getRow<{ key: string }>(db.prepare('SELECT key FROM api_keys WHERE user_id = ? AND status = 1 LIMIT 1'), user.id)
 
   if (!keys) {
     const newKey = createApiKey(user.id, 'default')
