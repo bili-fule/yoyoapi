@@ -8,4 +8,6 @@ data/
 web/build/
 web/.svelte-kit/
 .omo/
+*.log
+login.json
 
