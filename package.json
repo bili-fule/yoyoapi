@@ -1,0 +1,5 @@
+{
+  "name": "yoyoapi",
+  "private": true,
+  "workspaces": ["server", "web"]
+}
