@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { getProfile, listApiKeys, createApiKey, deleteApiKey } from '$lib/api/index.js'
 
-  let { data } = $props()
+  let { data, activeTab: tab } = $props()
 
   let profile = $state<{
     id: number; email: string; display_name: string; role: number
@@ -50,13 +50,13 @@
     }
   }
 
-  let activeTab = $derived(data.activeTab as string ?? 'Profile')
+
 </script>
 
 {#if loading}
   <p>Loading...</p>
 {:else}
-  {#if activeTab === 'Profile' && profile}
+  {#if tab === 'Profile' && profile}
     <div class="card">
       <h3>Profile</h3>
       <div class="field"><span class="label">Email</span><span>{profile.email}</span></div>
@@ -67,7 +67,7 @@
     </div>
   {/if}
 
-  {#if activeTab === 'API Keys'}
+  {#if tab === 'API Keys'}
     <div class="card">
       <h3>API Keys</h3>
       <div class="create-key">
@@ -99,7 +99,7 @@
     </div>
   {/if}
 
-  {#if activeTab === 'Settings'}
+  {#if tab === 'Settings'}
     <div class="card">
       <h3>Settings</h3>
       <p class="hint">More settings coming soon.</p>

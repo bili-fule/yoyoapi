@@ -1,7 +1,8 @@
 <script lang="ts">
   import '../app.css'
   import { auth, clearAuth } from '$lib/stores/auth.js'
-  import { page } from '$app/stores'
+
+  let { children } = $props()
 
   function logout() {
     clearAuth()

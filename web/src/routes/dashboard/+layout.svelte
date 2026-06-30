@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation'
   import { onMount } from 'svelte'
 
+  let { children } = $props()
+
   onMount(() => {
     if (!$auth.token) {
       goto('/login')
