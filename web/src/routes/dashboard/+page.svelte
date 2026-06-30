@@ -1,13 +1,27 @@
 <script lang="ts">
   import { auth } from '$lib/stores/auth.js'
   import { onMount } from 'svelte'
-  import { getProfile, listApiKeys, createApiKey, deleteApiKey, getQqBindCode, confirmQqBind, unbindQq } from '$lib/api/index.js'
+  import {
+    getProfile,
+    listApiKeys,
+    createApiKey,
+    deleteApiKey,
+    getQqBindCode,
+    confirmQqBind,
+    unbindQq,
+  } from '$lib/api/index.js'
 
-  let { data, activeTab: tab } = $props()
+  const tabs = ['Profile', 'API Keys', 'Settings'] as const
+  let activeTab = $state<(typeof tabs)[number]>('Profile')
 
   let profile = $state<{
-    id: number; email: string; display_name: string; role: number
-    quota: number; used_quota: number; qq_id: string
+    id: number
+    email: string
+    display_name: string
+    role: number
+    quota: number
+    used_quota: number
+    qq_id: string
   } | null>(null)
   let apiKeys = $state<{ id: number; keyPrefix: string; name: string; status: number; lastUsedAt: string | null }[]>([])
   let loading = $state(true)
@@ -27,7 +41,7 @@
         listApiKeys($auth.token),
       ])
       profile = profileRes.user
-      apiKeys = keysRes.apiKeys as any
+      apiKeys = keysRes.apiKeys as typeof apiKeys
     } catch (err) {
       console.error(err)
     } finally {
@@ -38,8 +52,8 @@
   async function handleCreateKey() {
     if (!$auth.token) return
     try {
-      const res = await createApiKey($auth.token, newKeyName || undefined) as any
-      apiKeys = [...apiKeys, res.apiKey]
+      const res = await createApiKey($auth.token, newKeyName || undefined) as { apiKey: { id: number; keyPrefix: string; name: string; status: number; lastUsedAt: string | null } }
+      apiKeys = [res.apiKey, ...apiKeys]
       newKeyName = ''
     } catch (err) {
       console.error(err)
@@ -106,14 +120,24 @@
       qqLoading = false
     }
   }
-
-
 </script>
 
 {#if loading}
   <p>Loading...</p>
 {:else}
-  {#if tab === 'Profile' && profile}
+  <nav class="tabs">
+    {#each tabs as tab}
+      <button
+        class="tab-link"
+        class:active={activeTab === tab}
+        onclick={() => activeTab = tab}
+      >
+        {tab}
+      </button>
+    {/each}
+  </nav>
+
+  {#if activeTab === 'Profile' && profile}
     <div class="card">
       <h3>Profile</h3>
       <div class="field"><span class="label">Email</span><span>{profile.email}</span></div>
@@ -124,7 +148,7 @@
     </div>
   {/if}
 
-  {#if tab === 'API Keys'}
+  {#if activeTab === 'API Keys'}
     <div class="card">
       <h3>API Keys</h3>
       <div class="create-key">
@@ -144,7 +168,7 @@
         <tbody>
           {#each apiKeys as key}
             <tr>
-              <td>{key.name || '—'}</td>
+              <td>{key.name || '-'}</td>
               <td><code>{key.keyPrefix}</code></td>
               <td>{key.status === 1 ? 'Active' : 'Disabled'}</td>
               <td>{key.lastUsedAt || 'Never'}</td>
@@ -156,7 +180,7 @@
     </div>
   {/if}
 
-  {#if tab === 'Settings'}
+  {#if activeTab === 'Settings'}
     <div class="card">
       <h3>Settings</h3>
       <div class="qq-section">
@@ -196,6 +220,26 @@
 {/if}
 
 <style>
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .tab-link {
+    padding: 0.6rem 1rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .tab-link.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
