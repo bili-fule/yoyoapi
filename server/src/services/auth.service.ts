@@ -4,12 +4,13 @@ import { getRow } from '../db/helpers.js'
 import { sendVerificationCode } from '../utils/email.js'
 import { createUser, getUserByEmail, getUserById, updatePassword } from './user.service.js'
 import { createApiKey } from './api-key.service.js'
+import { AuthError, ValidationError } from '../utils/errors.js'
 
 const CODE_EXPIRY_MINUTES = 10
 
 export async function register(email: string, password: string, code: string, displayName?: string) {
   const valid = verifyCode(email, code, 'register')
-  if (!valid) throw new Error('Invalid or expired verification code')
+  if (!valid) throw new ValidationError('Invalid or expired verification code')
 
   const user = await createUser(email, password, displayName)
   const apiKey = createApiKey(user.id, 'default')
@@ -21,42 +22,26 @@ export async function register(email: string, password: string, code: string, di
 
 export async function login(email: string, password: string) {
   const user = getUserByEmail(email)
-  if (!user) throw new Error('Invalid email or password')
-  if (user.role === 0) throw new Error('Account disabled')
+  if (!user) throw new AuthError('Invalid email or password')
+  if (user.role === 0) throw new AuthError('Account disabled')
 
   const ok = await verifyPassword(password, user.password_hash)
-  if (!ok) throw new Error('Invalid email or password')
+  if (!ok) throw new AuthError('Invalid email or password')
 
   const keys = getRow<{ key: string }>(db.prepare('SELECT key FROM api_keys WHERE user_id = ? AND status = 1 LIMIT 1'), user.id)
+
+  const { password_hash: _, ...safeUser } = user
 
   if (!keys) {
     const newKey = createApiKey(user.id, 'default')
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.display_name,
-        role: user.role,
-        quota: user.quota,
-        usedQuota: user.used_quota,
-        qqId: user.qq_id,
-        createdAt: user.created_at,
-      },
+      user: safeUser,
       apiKey: newKey.fullKey,
     }
   }
 
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      displayName: user.display_name,
-      role: user.role,
-      quota: user.quota,
-      usedQuota: user.used_quota,
-      qqId: user.qq_id,
-      createdAt: user.created_at,
-    },
+    user: safeUser,
     apiKey: keys.key,
   }
 }
@@ -73,10 +58,10 @@ export function sendCode(email: string, type: 'register' | 'reset') {
 
 export async function resetPassword(email: string, code: string, newPassword: string) {
   const valid = verifyCode(email, code, 'reset')
-  if (!valid) throw new Error('Invalid or expired verification code')
+  if (!valid) throw new ValidationError('Invalid or expired verification code')
 
   const user = getUserByEmail(email)
-  if (!user) throw new Error('User not found')
+  if (!user) throw new ValidationError('User not found')
 
   const passwordHash = await hashPassword(newPassword)
   updatePassword(user.id, passwordHash)

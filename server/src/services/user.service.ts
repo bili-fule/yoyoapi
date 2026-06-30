@@ -1,6 +1,7 @@
 import db from '../db/index.js'
 import { hashPassword } from '../utils/crypto.js'
 import { getRow, allRows } from '../db/helpers.js'
+import { ValidationError } from '../utils/errors.js'
 
 export interface UserRow {
   id: number
@@ -42,7 +43,7 @@ function toPublic(row: UserRow): UserPublic {
 export async function createUser(email: string, password: string, displayName?: string): Promise<UserPublic> {
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email)
   if (existing) {
-    throw new Error('Email already registered')
+    throw new ValidationError('Email already registered')
   }
 
   const passwordHash = await hashPassword(password)
