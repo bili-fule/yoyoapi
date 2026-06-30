@@ -2,11 +2,15 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { config } from './config.js'
 import { initDB } from './db/index.js'
 import { errorHandler } from './middleware/error.js'
 import routes from './routes/index.js'
 import { hashPassword } from './utils/crypto.js'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 initDB()
 
@@ -18,6 +22,12 @@ app.use(morgan('short'))
 app.use(express.json({ limit: '10mb' }))
 
 app.use('/api', routes)
+
+const webBuildPath = resolve(__dirname, '..', '..', 'web', 'build')
+app.use(express.static(webBuildPath))
+app.get('*', (_req, res) => {
+  res.sendFile(resolve(webBuildPath, 'index.html'))
+})
 
 app.use(errorHandler)
 
