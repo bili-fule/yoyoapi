@@ -1,0 +1,78 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-height);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+
+.inner {
+  max-width: var(--content-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.logo:hover {
+  opacity: 0.7;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.link {
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+}
+
+.link:hover {
+  color: var(--text);
+  opacity: 1;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.logoutBtn:hover {
+  color: var(--error);
+}
+
+.langBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  margin-left: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.langBtn:hover {
+  background: var(--canvas);
+  color: var(--text);
+}

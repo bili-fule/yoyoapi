@@ -1,0 +1,193 @@
+import type { TranslationKey } from './en'
+
+export const zh: Record<TranslationKey, string> = {
+  // Header
+  'header.logo': 'YoYOapi',
+  'header.login': '登录',
+  'header.register': '注册',
+  'header.dashboard': '控制台',
+  'header.admin': '管理',
+  'header.logout': '退出',
+
+  // Home
+  'home.title': 'YoYOapi',
+  'home.subtitle': 'OpenAI / Anthropic / Gemini \u2014 统一 API 中转',
+  'home.cta.getStarted': '开始使用',
+  'home.cta.signIn': '登录',
+  'home.feature1.title': '多格式支持',
+  'home.feature1.desc': 'OpenAI 到 Anthropic / Gemini 格式自动转换，一份代码调用所有模型。',
+  'home.feature2.title': '邮箱登录',
+  'home.feature2.desc': '简单安全的邮箱验证码登录，无需手机号。',
+  'home.feature3.title': 'QQ 绑定',
+  'home.feature3.desc': '绑定 QQ 账号，安全风控，防止滥用。',
+
+  // Auth - common
+  'auth.email': '邮箱',
+  'auth.emailPlaceholder': 'you@example.com',
+  'auth.password': '密码',
+  'auth.passwordPlaceholder': '至少 6 个字符',
+  'auth.code': '验证码',
+  'auth.codePlaceholder': '123456',
+  'auth.sendCode': '发送验证码',
+  'auth.sendResetCode': '发送重置码',
+  'auth.sending': '发送中...',
+  'auth.codeSent': '验证码已发送至 {email}',
+  'auth.resend': '重新发送',
+  'auth.resendIn': '{s} 秒后重新发送',
+  'auth.or': '或',
+
+  // Login
+  'login.title': '登录',
+  'login.button': '登录',
+  'login.loading': '登录中...',
+  'login.forgot': '忘记密码？',
+  'login.noAccount': '还没有账号？',
+  'login.register': '注册',
+
+  // Register
+  'register.title': '创建账号',
+  'register.button': '创建账号',
+  'register.creating': '创建中...',
+  'register.haveAccount': '已有账号？',
+  'register.signIn': '登录',
+
+  // Reset Password
+  'reset.title': '重置密码',
+  'reset.newPassword': '新密码',
+  'reset.button': '重置密码',
+  'reset.resetting': '重置中...',
+  'reset.rememberPassword': '记得密码？',
+  'reset.signIn': '登录',
+
+  // Dashboard
+  'dashboard.title': '控制台',
+  'dashboard.tab.profile': '个人资料',
+  'dashboard.tab.apiKeys': 'API 密钥',
+  'dashboard.tab.settings': '设置',
+
+  // Dashboard - Profile
+  'profile.email': '邮箱',
+  'profile.displayName': '显示名称',
+  'profile.role': '角色',
+  'profile.admin': '管理员',
+  'profile.user': '用户',
+  'profile.quota': '已用配额',
+  'profile.quotaValue': '{used} / {total}',
+  'profile.qqBind': 'QQ 绑定',
+  'profile.qqBound': '已绑定 ({id})',
+  'profile.qqNotBound': '未绑定',
+
+  // Dashboard - API Keys
+  'apikeys.create': '创建',
+  'apikeys.name': '名称',
+  'apikeys.namePlaceholder': '密钥名称（可选）',
+  'apikeys.key': '密钥',
+  'apikeys.status': '状态',
+  'apikeys.lastUsed': '最后使用',
+  'apikeys.never': '从未',
+  'apikeys.active': '启用',
+  'apikeys.disabled': '禁用',
+  'apikeys.delete': '删除',
+  'apikeys.noKeys': '暂无 API 密钥。在上面创建一个。',
+  'apikeys.dash': '\u2014',
+
+  // Dashboard - Settings / QQ Bind
+  'qq.bind': '绑定 QQ',
+  'qq.unbind': '解绑',
+  'qq.confirm': '确认绑定',
+  'qq.loading': '加载中...',
+  'qq.unbinding': '解绑中...',
+  'qq.confirming': '确认中...',
+  'qq.sendCode': '将此代码发送给 QQ 机器人',
+  'qq.expiresIn': '{s} 秒后过期',
+  'qq.description': '绑定 QQ 账号以获得额外安全保护。',
+  'qq.bound': '已绑定 QQ',
+  'qq.boundSuccess': 'QQ 绑定成功',
+  'qq.unboundSuccess': 'QQ 解绑成功',
+
+  // Admin
+  'admin.title': '管理面板',
+  'admin.tab.users': '用户',
+  'admin.tab.channels': '通道',
+  'admin.tab.logs': '日志',
+  'admin.tab.stats': '统计',
+  'admin.accessDenied': '访问被拒',
+  'admin.accessDenied.desc': '你没有管理员权限。',
+
+  // Admin - Users
+  'users.id': 'ID',
+  'users.email': '邮箱',
+  'users.displayName': '显示名称',
+  'users.role': '角色',
+  'users.quota': '配额',
+  'users.qqId': 'QQ ID',
+  'users.actions': '操作',
+  'users.edit': '编辑',
+  'users.delete': '删除',
+  'users.editTitle': '编辑用户 #{id}',
+  'users.dash': '\u2014',
+  'users.confirmDelete': '确定要删除此用户吗？',
+  'users.noUsers': '暂无用户。',
+  'users.prev': '上一页',
+  'users.next': '下一页',
+  'users.page': '第 {current} / {total} 页',
+
+  // Admin - Channels
+  'channels.name': '名称',
+  'channels.type': '类型',
+  'channels.baseUrl': '基础 URL',
+  'channels.models': '模型',
+  'channels.status': '状态',
+  'channels.priority': '优先级',
+  'channels.actions': '操作',
+  'channels.edit': '编辑',
+  'channels.delete': '删除',
+  'channels.create': '创建通道',
+  'channels.createTitle': '创建通道',
+  'channels.editTitle': '编辑通道 #{id}',
+  'channels.apiKey': 'API 密钥',
+  'channels.modelsPlaceholder': '逗号分隔的模型名称',
+  'channels.active': '启用',
+  'channels.disabled': '禁用',
+  'channels.confirmDelete': '确定要删除此通道吗？',
+  'channels.noChannels': '暂无通道。',
+  'channels.cancel': '取消',
+  'channels.save': '保存',
+  'channels.saving': '保存中...',
+
+  // Admin - Logs
+  'logs.id': 'ID',
+  'logs.userId': '用户 ID',
+  'logs.model': '模型',
+  'logs.promptTokens': '提示 Tokens',
+  'logs.completionTokens': '生成 Tokens',
+  'logs.cost': '消耗',
+  'logs.timestamp': '时间',
+  'logs.filter': '筛选',
+  'logs.filterPlaceholder': '按用户 ID 筛选',
+  'logs.prev': '上一页',
+  'logs.next': '下一页',
+  'logs.page': '第 {current} / {total} 页',
+  'logs.noLogs': '暂无日志。',
+
+  // Admin - Stats
+  'stats.totalUsers': '总用户数',
+  'stats.todayUsage': '今日用量',
+
+  // 404
+  'notFound.title': '页面未找到',
+  'notFound.status': '404',
+  'notFound.desc': '你访问的页面不存在。',
+  'notFound.goHome': '返回首页',
+
+  // Loading / Error
+  'loading': '加载中...',
+  'error.default': '发生错误，请重试。',
+  'accessDenied': '访问被拒',
+  'accessDenied.desc': '你没有权限访问此页面。',
+
+  // Language
+  'lang.switch': '语言',
+  'lang.zh': '中文',
+  'lang.en': 'English',
+}

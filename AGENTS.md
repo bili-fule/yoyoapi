@@ -7,7 +7,7 @@ YoYOapi is a Node.js AI API relay station (公益中转站) with email login, QQ
 ## Tech Stack
 
 - **Backend**: Express + TypeScript, `better-sqlite3`, `vitest`
-- **Frontend**: SvelteKit 5 (adapter-static, built output served by Express)
+- **Frontend**: Next.js 15 (App Router, static export `output: 'export'`, built output served by Express)
 - **Auth**: API Key (`sk-xxx`) via `better-sqlite3` lookup (no JWT/sessions for API)
 - **Database**: SQLite only (WAL mode, `data/yoyoapi.db`)
 
@@ -109,7 +109,7 @@ YoYOapi/
 │   │   ├── converters/
 │   │   └── utils/
 │   └── package.json
-├── web/             # SvelteKit frontend
+├── web/             # Next.js frontend
 │   └── src/
 └── AGENTS.md
 ```

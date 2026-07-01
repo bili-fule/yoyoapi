@@ -1,0 +1,41 @@
+.denied {
+  min-height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.deniedTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.deniedDesc {
+  margin-top: 12px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.deniedLink {
+  margin-top: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.deniedLink:hover {
+  background: var(--primary-hover);
+  opacity: 1;
+}

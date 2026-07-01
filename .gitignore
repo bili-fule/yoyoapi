@@ -7,6 +7,7 @@ dist/
 data/
 web/build/
 web/.svelte-kit/
+web/.next/
 .omo/
 *.log
 login.json
