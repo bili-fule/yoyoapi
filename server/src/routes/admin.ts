@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as adminController from '../controllers/admin.controller.js'
 import { tokenAuth, adminAuth } from '../middleware/auth.js'
+import { asyncHandler } from '../utils/async-handler.js'
 
 const router = Router()
 
@@ -14,6 +15,8 @@ router.get('/channels', adminController.listChannels)
 router.post('/channels', adminController.createChannel)
 router.put('/channels/:id', adminController.updateChannel)
 router.delete('/channels/:id', adminController.deleteChannel)
+
+router.post('/channels/fetch-models', asyncHandler(adminController.fetchModels))
 
 router.get('/logs', adminController.getLogs)
 router.get('/stats', adminController.getStats)

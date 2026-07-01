@@ -198,6 +198,17 @@ export async function deleteChannel(token: string, id: number): Promise<{ messag
   })
 }
 
+export async function fetchModels(
+  token: string,
+  data: { type: string; baseUrl: string; apiKey: string },
+): Promise<{ models: string[] }> {
+  return apiRequest('/admin/channels/fetch-models', {
+    method: 'POST',
+    token,
+    body: data,
+  })
+}
+
 // Admin — logs & stats
 export async function getLogs(
   token: string,

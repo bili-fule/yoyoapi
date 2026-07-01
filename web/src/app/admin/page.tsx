@@ -11,6 +11,7 @@ import {
   createChannel,
   updateChannel,
   deleteChannel,
+  fetchModels,
   getLogs,
   getStats,
 } from '@/lib/api'
@@ -103,6 +104,7 @@ export default function AdminPage() {
   const [channelsLoading, setChannelsLoading] = useState(false)
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null)
   const [showChannelModal, setShowChannelModal] = useState(false)
+  const [modelsFetching, setModelsFetching] = useState(false)
   const [channelForm, setChannelForm] = useState({
     name: '',
     type: 'openai',
@@ -772,10 +774,9 @@ export default function AdminPage() {
                 <label className={styles.label} htmlFor="ch-type">
                   {t('channels.type')}
                 </label>
-                <input
+                <select
                   id="ch-type"
-                  className={styles.input}
-                  type="text"
+                  className={styles.select}
                   value={channelForm.type}
                   onChange={(e) =>
                     setChannelForm((f) => ({
@@ -783,7 +784,11 @@ export default function AdminPage() {
                       type: e.target.value,
                     }))
                   }
-                />
+                >
+                  <option value="openai">openai</option>
+                  <option value="anthropic">anthropic</option>
+                  <option value="gemini">gemini</option>
+                </select>
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="ch-baseUrl">
@@ -825,19 +830,57 @@ export default function AdminPage() {
                 <label className={styles.label} htmlFor="ch-models">
                   {t('channels.models')}
                 </label>
-                <input
-                  id="ch-models"
-                  className={styles.input}
-                  type="text"
-                  placeholder={t('channels.modelsPlaceholder')}
-                  value={channelForm.models}
-                  onChange={(e) =>
-                    setChannelForm((f) => ({
-                      ...f,
-                      models: e.target.value,
-                    }))
-                  }
-                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    id="ch-models"
+                    className={styles.input}
+                    type="text"
+                    placeholder={t('channels.modelsPlaceholder')}
+                    value={channelForm.models}
+                    onChange={(e) =>
+                      setChannelForm((f) => ({
+                        ...f,
+                        models: e.target.value,
+                      }))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.saveBtn}
+                    disabled={
+                      modelsFetching ||
+                      !channelForm.baseUrl.trim() ||
+                      !channelForm.apiKey.trim()
+                    }
+                    onClick={async () => {
+                      if (!token) return
+                      setModelsFetching(true)
+                      setError('')
+                      try {
+                        const result = await fetchModels(token, {
+                          type: channelForm.type,
+                          baseUrl: channelForm.baseUrl,
+                          apiKey: channelForm.apiKey,
+                        })
+                        setChannelForm((f) => ({
+                          ...f,
+                          models: result.models.join(', '),
+                        }))
+                      } catch (err) {
+                        setError(
+                          err instanceof Error
+                            ? err.message
+                            : 'Failed to fetch models',
+                        )
+                      } finally {
+                        setModelsFetching(false)
+                      }
+                    }}
+                  >
+                    {modelsFetching ? 'Fetching...' : 'Fetch Models'}
+                  </button>
+                </div>
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="ch-priority">

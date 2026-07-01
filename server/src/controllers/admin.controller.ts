@@ -114,6 +114,50 @@ export function deleteChannel(req: Request, res: Response): void {
   res.json({ message: 'Channel deleted' })
 }
 
+const fetchModelsSchema = z.object({
+  type: z.enum(['openai', 'anthropic', 'gemini']),
+  baseUrl: z.string(),
+  apiKey: z.string().min(1, 'API key is required'),
+})
+
+export async function fetchModels(req: Request, res: Response): Promise<void> {
+  const { type, baseUrl, apiKey } = fetchModelsSchema.parse(req.body)
+
+  if (type !== 'openai') {
+    res.status(400).json({ error: { message: `Model fetch not supported for type: ${type}` } })
+    return
+  }
+
+  const normalizedUrl = baseUrl.replace(/\/+$/, '')
+  let upstreamResponse: globalThis.Response
+  try {
+    upstreamResponse = await fetch(`${normalizedUrl}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(15000),
+    })
+  } catch {
+    res.status(502).json({ error: { message: 'Failed to connect to upstream API' } })
+    return
+  }
+
+  if (!upstreamResponse.ok) {
+    const errorText = await upstreamResponse.text().catch(() => 'Unknown error')
+    res.status(502).json({ error: { message: `Upstream API error ${upstreamResponse.status}: ${errorText}` } })
+    return
+  }
+
+  let body: { data?: Array<{ id: string }> }
+  try {
+    body = (await upstreamResponse.json()) as { data?: Array<{ id: string }> }
+  } catch {
+    res.status(502).json({ error: { message: 'Invalid response from upstream API' } })
+    return
+  }
+
+  const models = (body.data ?? []).map((m) => m.id)
+  res.json({ models })
+}
+
 export function getLogs(req: Request, res: Response): void {
   const page = parseInt(req.query.page as string) || 1
   const pageSize = parseInt(req.query.pageSize as string) || 20
