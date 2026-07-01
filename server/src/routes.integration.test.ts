@@ -61,7 +61,7 @@ describe('API Integration', () => {
     expect(res.body.apiKey).toBe(key)
   })
 
-  it('POST /api/auth/login with wrong password returns 500', async () => {
+  it('POST /api/auth/login with wrong password returns 401', async () => {
     const pwHash = await hashPassword('pass123')
     db.prepare('INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)')
       .run('login@test.com', pwHash, 'Test')
@@ -69,7 +69,7 @@ describe('API Integration', () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: 'login@test.com', password: 'wrong' })
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(401)
   })
 
   it('GET /api/user/profile with valid API key', async () => {
