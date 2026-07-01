@@ -1,12 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { writeFileSync, unlinkSync } from 'fs'
+import { resolve } from 'path'
 
 const ORIGINAL_ENV = { ...process.env }
+const TEST_ENV_PATH = resolve(process.cwd(), 'data', '.env.test')
 
 beforeEach(() => {
   vi.resetModules()
+  process.env.YOYOAPI_ENV_FILE = TEST_ENV_PATH
 })
 
 afterEach(() => {
+  try {
+    unlinkSync(TEST_ENV_PATH)
+  } catch {
+  }
   process.env = { ...ORIGINAL_ENV }
 })
 
@@ -47,5 +55,25 @@ describe('config', () => {
     const { config } = await import('./config.js')
     expect(config.port).toBe(3001)
     expect(config.host).toBe('0.0.0.0')
+  })
+
+  it('loads values from server .env file', async () => {
+    delete process.env.SMTP_HOST
+    delete process.env.SMTP_PORT
+    writeFileSync(TEST_ENV_PATH, 'SMTP_HOST=smtp.example.com\nSMTP_PORT=465\n')
+
+    const { config } = await import('./config.js')
+
+    expect(config.smtp.host).toBe('smtp.example.com')
+    expect(config.smtp.port).toBe(465)
+  })
+
+  it('does not override existing environment variables with .env values', async () => {
+    process.env.SMTP_HOST = 'smtp.runtime.example.com'
+    writeFileSync(TEST_ENV_PATH, 'SMTP_HOST=smtp.file.example.com\n')
+
+    const { config } = await import('./config.js')
+
+    expect(config.smtp.host).toBe('smtp.runtime.example.com')
   })
 })

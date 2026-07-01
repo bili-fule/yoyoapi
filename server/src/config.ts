@@ -1,7 +1,34 @@
+import { existsSync, readFileSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+function loadEnvFile(path: string): void {
+  if (!existsSync(path)) return
+
+  const content = readFileSync(path, 'utf8')
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    const index = trimmed.indexOf('=')
+    if (index === -1) continue
+
+    const key = trimmed.slice(0, index).trim()
+    if (!key || process.env[key] !== undefined) continue
+
+    const rawValue = trimmed.slice(index + 1).trim()
+    process.env[key] = rawValue.replace(/^(['"])(.*)\1$/, '$2')
+  }
+}
+
+if (process.env.YOYOAPI_ENV_FILE) {
+  loadEnvFile(process.env.YOYOAPI_ENV_FILE)
+} else if (process.env.VITEST !== 'true') {
+  loadEnvFile(resolve(__dirname, '..', '..', '.env'))
+  loadEnvFile(resolve(__dirname, '..', '.env'))
+}
 
 function env(key: string, fallback?: string): string {
   return process.env[key] ?? fallback ?? ''
