@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest'
 import express from 'express'
 import request from 'supertest'
+import cors from 'cors'
 import { initDB } from './db/index.js'
 import { errorHandler } from './middleware/error.js'
 import routes from './routes/index.js'
@@ -22,6 +23,7 @@ beforeAll(async () => {
   cleanDB()
 
   app = express()
+  app.use(cors())
   app.use(express.json())
   app.use('/api', routes)
   app.use(errorHandler)
@@ -32,6 +34,11 @@ beforeEach(() => {
 })
 
 describe('API Integration', () => {
+  it('should return CORS headers', async () => {
+    const res = await request(app).get('/api/health')
+    expect(res.headers['access-control-allow-origin']).toBe('*')
+  })
+
   it('GET /api/health', async () => {
     const res = await request(app).get('/api/health')
     expect(res.status).toBe(200)

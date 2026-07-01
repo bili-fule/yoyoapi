@@ -10,7 +10,9 @@ function env(key: string, fallback?: string): string {
 export const config = {
   port: parseInt(env('PORT', '3001'), 10),
   host: env('HOST', '0.0.0.0'),
+  corsOrigin: env('CORS_ORIGIN', '*'),
   dbPath: env('DB_PATH', resolve(__dirname, '..', 'data', 'yoyoapi.db')),
+  serveStatic: env('SERVE_STATIC', 'true') === 'true',
   smtp: {
     host: env('SMTP_HOST'),
     port: parseInt(env('SMTP_PORT', '587'), 10),

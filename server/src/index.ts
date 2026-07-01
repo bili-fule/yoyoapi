@@ -17,17 +17,19 @@ initDB()
 const app = express()
 
 app.use(helmet({ contentSecurityPolicy: false }))
-app.use(cors())
+app.use(cors({ origin: config.corsOrigin }))
 app.use(morgan('short'))
 app.use(express.json({ limit: '10mb' }))
 
 app.use('/api', routes)
 
-const webBuildPath = resolve(__dirname, '..', '..', 'web', 'build')
-app.use(express.static(webBuildPath))
-app.get('*', (_req, res) => {
-  res.sendFile(resolve(webBuildPath, 'index.html'))
-})
+if (config.serveStatic) {
+  const webBuildPath = resolve(__dirname, '..', '..', 'web', 'build')
+  app.use(express.static(webBuildPath))
+  app.get('*', (_req, res) => {
+    res.sendFile(resolve(webBuildPath, 'index.html'))
+  })
+}
 
 app.use(errorHandler)
 
