@@ -196,13 +196,13 @@ describe('Admin Users', () => {
     expect(stillThere).toBeUndefined()
   })
 
-  it('deleteUser returns 200 even for non-existent user', async () => {
+  it('deleteUser returns 404 for non-existent user', async () => {
     const res = await request(app)
       .delete('/admin/users/99999')
       .set('Authorization', `Bearer ${adminKey}`)
 
-    expect(res.status).toBe(200)
-    expect(res.body.message).toBe('User deleted')
+    expect(res.status).toBe(404)
+    expect(res.body.error.message).toBe('User not found')
   })
 })
 

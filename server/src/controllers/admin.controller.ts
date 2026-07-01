@@ -37,6 +37,13 @@ export function updateUser(req: Request, res: Response): void {
 
 export function deleteUser(req: Request, res: Response): void {
   const id = parseInt(req.params.id, 10)
+  const existing = getRow<{ id: number }>(db.prepare('SELECT id FROM users WHERE id = ?'), id)
+  if (!existing) {
+    res.status(404).json({ error: { message: 'User not found' } })
+    return
+  }
+  db.prepare('DELETE FROM api_keys WHERE user_id = ?').run(id)
+  db.prepare('UPDATE logs SET user_id = NULL, api_key_id = NULL WHERE user_id = ?').run(id)
   db.prepare('DELETE FROM users WHERE id = ?').run(id)
   res.json({ message: 'User deleted' })
 }
