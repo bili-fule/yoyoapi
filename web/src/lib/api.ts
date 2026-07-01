@@ -1,5 +1,15 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api'
 
+let onUnauthorized: (() => void) | null = null
+
+/**
+ * Register a handler that fires when an API call returns 401.
+ * Pass `null` to unregister.
+ */
+export function setOnUnauthorized(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
+
 interface ApiOptions {
   method?: string
   body?: unknown
@@ -24,6 +34,10 @@ export async function apiRequest<T = unknown>(path: string, options: ApiOptions 
   const data = await res.json()
 
   if (!res.ok) {
+    // Session expired or account disabled — force logout
+    if (res.status === 401) {
+      onUnauthorized?.()
+    }
     throw new Error(data.error?.message ?? `Request failed: ${res.status}`)
   }
 

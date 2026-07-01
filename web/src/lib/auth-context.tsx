@@ -1,6 +1,8 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { setOnUnauthorized } from './api'
 
 export interface User {
   id: number
@@ -52,6 +54,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [stored, setStored] = useState<StoredAuth | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setStored(loadAuth())
@@ -77,6 +80,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return auth
     })
   }, [])
+
+  // When the backend returns 401 (invalid/disabled token),
+  // clear auth state and redirect to login.
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      logout()
+      router.push('/login')
+    })
+    return () => setOnUnauthorized(null)
+  }, [logout, router])
 
   const value: AuthContextValue = {
     token: stored?.token ?? null,
