@@ -109,7 +109,7 @@ export async function listApiKeys(
 export async function createApiKey(
   token: string,
   name?: string,
-): Promise<{ apiKey: { id: number; keyPrefix: string; name: string; status: number; lastUsedAt: string | null } }> {
+): Promise<{ apiKey: { id: number; keyPrefix: string; name: string; status: number; lastUsedAt: string | null; fullKey: string } }> {
   return apiRequest('/user/api-keys', {
     method: 'POST',
     token,

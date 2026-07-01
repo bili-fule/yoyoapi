@@ -22,6 +22,7 @@ interface ApiKeyItem {
   name: string
   status: number
   lastUsedAt: string | null
+  fullKey?: string
 }
 
 export default function DashboardPage() {
@@ -148,6 +149,8 @@ function ApiKeysTab({ token }: { token: string }) {
   const [error, setError] = useState('')
   const [newKeyName, setNewKeyName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (keys !== null) return
@@ -165,15 +168,34 @@ function ApiKeysTab({ token }: { token: string }) {
     setError('')
     try {
       const result = await createApiKey(token, newKeyName || undefined)
-      setKeys((prev) => {
-        const item = result.apiKey as ApiKeyItem
-        return prev ? [item, ...prev] : [item]
-      })
+      const item: ApiKeyItem = result.apiKey
+      setKeys((prev) => (prev ? [item, ...prev] : [item]))
+      setCreatedKey(item.fullKey ?? null)
       setNewKeyName('')
+      setCopied(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create key')
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function handleCopyKey() {
+    if (!createdKey) return
+    try {
+      await navigator.clipboard.writeText(createdKey)
+      setCopied(true)
+    } catch {
+      // Fallback: select and execCommand
+      const ta = document.createElement('textarea')
+      ta.value = createdKey
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
     }
   }
 
@@ -188,7 +210,7 @@ function ApiKeysTab({ token }: { token: string }) {
   }
 
   return (
-    <div className={styles.card}>
+    <><div className={styles.card}>
       <div className={styles.createSection}>
         <input
           className={styles.input}
@@ -260,6 +282,33 @@ function ApiKeysTab({ token }: { token: string }) {
         </table>
       )}
     </div>
+
+    {createdKey && (
+      <div className={styles.overlay} onClick={() => setCreatedKey(null)}>
+        <div className={styles.createdKeyModal} onClick={(e) => e.stopPropagation()}>
+          <h3 className={styles.createdKeyTitle}>{t('apikeys.created')}</h3>
+          <p className={styles.createdKeyHint}>{t('apikeys.createdHint')}</p>
+          <div className={styles.createdKeyBox}>
+            <code className={styles.createdKeyValue}>{createdKey}</code>
+            <button
+              type="button"
+              className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : ''}`}
+              onClick={handleCopyKey}
+            >
+              {copied ? t('apikeys.copied') : t('apikeys.copy')}
+            </button>
+          </div>
+          <button
+            type="button"
+            className={styles.dismissBtn}
+            onClick={() => setCreatedKey(null)}
+          >
+            {t('apikeys.dismiss')}
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   )
 }
 

@@ -88,6 +88,11 @@ export const en = {
   'apikeys.delete': 'Delete',
   'apikeys.noKeys': 'No API keys yet. Create one above.',
   'apikeys.dash': '\u2014',
+  'apikeys.created': 'API Key Created',
+  'apikeys.createdHint': 'Copy this key now. You won\'t be able to see it again.',
+  'apikeys.copy': 'Copy',
+  'apikeys.copied': 'Copied!',
+  'apikeys.dismiss': 'Done',
 
   // Dashboard - Settings / QQ Bind
   'qq.bind': 'Bind QQ',

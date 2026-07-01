@@ -90,6 +90,11 @@ export const zh: Record<TranslationKey, string> = {
   'apikeys.delete': '删除',
   'apikeys.noKeys': '暂无 API 密钥。在上面创建一个。',
   'apikeys.dash': '\u2014',
+  'apikeys.created': '密钥已创建',
+  'apikeys.createdHint': '立即复制此密钥，关闭后将无法再次查看。',
+  'apikeys.copy': '复制',
+  'apikeys.copied': '已复制',
+  'apikeys.dismiss': '完成',
 
   // Dashboard - Settings / QQ Bind
   'qq.bind': '绑定 QQ',
