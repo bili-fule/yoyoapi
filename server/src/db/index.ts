@@ -12,6 +12,11 @@ db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
 
 export function initDB(): void {
+  // Clean up orphan table from prior code version
+  db.exec(`DROP TABLE IF EXISTS format_routes;`)
+  // Remove redundant index (duplicates UNIQUE constraint on api_keys.key)
+  db.exec(`DROP INDEX IF EXISTS idx_api_keys_key;`)
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
