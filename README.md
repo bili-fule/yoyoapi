@@ -42,7 +42,7 @@ X-Target-Format: openai | anthropic | gemini
 - OpenAI ↔ Anthropic / Gemini 格式自动转换
 - QQ 绑定（对接 AstrBot）
 - 管理后台
-- SvelteKit 前端面板
+- Next.js 前端面板
 
 ## 项目结构
 
@@ -56,5 +56,5 @@ server/       Express + TypeScript 后端
     services/       业务逻辑
     controllers/    HTTP 处理
     routes/         路由
-web/          SvelteKit 前端
+web/          Next.js 前端
 ```
