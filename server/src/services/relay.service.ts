@@ -16,13 +16,14 @@ export type RelayResult =
   | { response: OpenAIResponse; usage: { promptTokens: number; completionTokens: number } }
   | { stream: Response; model: string; targetFormat: TargetFormat }
 
-function buildUpstreamUrl(baseUrl: string, format: TargetFormat, model: string): string {
+function buildUpstreamUrl(baseUrl: string, format: TargetFormat, model: string, stream?: boolean): string {
   switch (format) {
     case 'anthropic':
       return `${baseUrl.replace(/\/+$/, '')}/v1/messages`
     case 'gemini': {
       const modelPath = model.includes('/') ? model.split('/').pop()! : model
-      return `${baseUrl.replace(/\/+$/, '')}/v1beta/models/${modelPath}:streamGenerateContent`
+      const action = stream ? ':streamGenerateContent' : ':generateContent'
+      return `${baseUrl.replace(/\/+$/, '')}/v1beta/models/${modelPath}${action}`
     }
     default:
       return `${baseUrl.replace(/\/+$/, '')}/chat/completions`
@@ -54,6 +55,7 @@ async function relayToUpstream(url: string, headers: Record<string, string>, bod
     method: 'POST',
     headers,
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000),
   })
 }
 
@@ -70,9 +72,10 @@ export async function relayChatCompletion(
     throw new AuthError('Quota exceeded')
   }
 
-  const { body: convertedBody, format } = convertRequest(oaiReq, options.targetFormat)
+  const { body: convertedBody, format, mappedModel } = convertRequest(oaiReq, options.targetFormat)
+  const effectiveModel = mappedModel ?? options.model
 
-  const upstreamUrl = buildUpstreamUrl(channel.base_url, format, options.model)
+  const upstreamUrl = buildUpstreamUrl(channel.base_url, format, effectiveModel, !!oaiReq.stream)
   const upstreamHeaders = buildUpstreamHeaders(format, channel.api_key)
 
   const resp = await relayToUpstream(upstreamUrl, upstreamHeaders, convertedBody)
@@ -83,7 +86,7 @@ export async function relayChatCompletion(
   }
 
   if (oaiReq.stream) {
-    return { stream: resp, model: oaiReq.model, targetFormat: options.targetFormat }
+    return { stream: resp, model: effectiveModel, targetFormat: options.targetFormat }
   }
 
   const rawBody = await resp.json()
@@ -92,18 +95,19 @@ export async function relayChatCompletion(
   const promptTokens = oaiResponse.usage?.prompt_tokens ?? 0
   const completionTokens = oaiResponse.usage?.completion_tokens ?? 0
 
-  deductQuota(options.userId, promptTokens, completionTokens)
-
-  logUsage({
-    userId: options.userId,
-    apiKeyId: options.apiKeyId,
-    channelId: options.channelId,
-    model: oaiReq.model,
-    targetFormat: options.targetFormat,
-    promptTokens,
-    completionTokens,
-    success: true,
-  })
+  db.transaction(() => {
+    deductQuota(options.userId, promptTokens, completionTokens)
+    logUsage({
+      userId: options.userId,
+      apiKeyId: options.apiKeyId,
+      channelId: options.channelId,
+      model: oaiReq.model,
+      targetFormat: options.targetFormat,
+      promptTokens,
+      completionTokens,
+      success: true,
+    })
+  })()
 
   return {
     response: oaiResponse,

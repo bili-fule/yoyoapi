@@ -25,20 +25,28 @@ export async function apiRequest<T = unknown>(path: string, options: ApiOptions 
     headers['Authorization'] = `Bearer ${options.token}`
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: options.method ?? 'GET',
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: options.method ?? 'GET',
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    })
+  } catch {
+    throw new Error('Network error: unable to reach server. Please check your connection.')
+  }
 
-  const data = await res.json()
+  let data: unknown
+  try {
+    data = await res.json()
+  } catch {
+    throw new Error(`Server returned ${res.status}. Please try again later.`)
+  }
 
   if (!res.ok) {
-    // Session expired or account disabled — force logout
-    if (res.status === 401) {
-      onUnauthorized?.()
-    }
-    throw new Error(data.error?.message ?? `Request failed: ${res.status}`)
+    if (res.status === 401) onUnauthorized?.()
+    const errMsg = (data as { error?: { message?: string } })?.error?.message ?? `Request failed: ${res.status}`
+    throw new Error(errMsg)
   }
 
   return data as T
@@ -86,17 +94,6 @@ export async function getProfile(
   token: string,
 ): Promise<{ user: { id: number; email: string; display_name: string; role: number; quota: number; used_quota: number; qq_id: string } }> {
   return apiRequest('/user/profile', { token })
-}
-
-export async function updateProfile(
-  token: string,
-  displayName: string,
-): Promise<{ user: { id: number; email: string; display_name: string; role: number; quota: number; used_quota: number; qq_id: string } }> {
-  return apiRequest('/user/profile', {
-    method: 'PUT',
-    token,
-    body: { displayName },
-  })
 }
 
 // API keys
@@ -238,4 +235,23 @@ export async function getLogs(
 
 export async function getStats(token: string): Promise<{ totalUsers: number; todayUsage: number }> {
   return apiRequest('/admin/stats', { token })
+}
+
+// Admin — settings
+export async function getSettings(
+  token: string,
+): Promise<{ settings: Record<string, string> }> {
+  return apiRequest('/admin/settings', { token })
+}
+
+export async function updateSetting(
+  token: string,
+  key: string,
+  value: string,
+): Promise<{ message: string }> {
+  return apiRequest('/admin/settings', {
+    method: 'PUT',
+    token,
+    body: { key, value },
+  })
 }

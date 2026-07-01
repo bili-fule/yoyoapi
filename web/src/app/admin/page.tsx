@@ -14,6 +14,8 @@ import {
   fetchModels,
   getLogs,
   getStats,
+  getSettings,
+  updateSetting,
 } from '@/lib/api'
 import styles from './page.module.css'
 
@@ -58,7 +60,7 @@ interface Stats {
   todayUsage: number
 }
 
-type Tab = 'users' | 'channels' | 'logs' | 'stats'
+type Tab = 'users' | 'channels' | 'logs' | 'stats' | 'settings'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -79,6 +81,7 @@ export default function AdminPage() {
     { key: 'channels', label: t('admin.tab.channels') },
     { key: 'logs', label: t('admin.tab.logs') },
     { key: 'stats', label: t('admin.tab.stats') },
+    { key: 'settings', label: t('admin.tab.settings') },
   ]
 
   /* tab state */
@@ -126,6 +129,13 @@ export default function AdminPage() {
   /* ---- stats ---- */
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
+
+  /* ---- settings ---- */
+  const [settings, setSettings] = useState<Record<string, string>>({})
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsError, setSettingsError] = useState('')
+  const [settingsSavedMsg, setSettingsSavedMsg] = useState('')
 
   /* ------------------------------------------------------------------ */
   /*  Data fetching                                                      */
@@ -191,6 +201,19 @@ export default function AdminPage() {
       .then((data) => setStats(data))
       .catch((err: Error) => setError(err.message))
       .finally(() => setStatsLoading(false))
+  }, [activeTab, token])
+
+  /* Settings */
+  useEffect(() => {
+    if (activeTab !== 'settings' || !token) return
+
+    setSettingsLoading(true)
+    setSettingsError('')
+
+    getSettings(token)
+      .then((data) => setSettings(data.settings))
+      .catch((err: Error) => setSettingsError(err.message))
+      .finally(() => setSettingsLoading(false))
   }, [activeTab, token])
 
   /* ------------------------------------------------------------------ */
@@ -337,6 +360,29 @@ export default function AdminPage() {
   function applyLogsFilter() {
     setLogsPage(1)
     setLogsActiveFilter(logsFilterInput)
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Handlers — Settings                                                 */
+  /* ------------------------------------------------------------------ */
+
+  async function handleSettingToggle(key: string, currentValue: string) {
+    if (!token) return
+    const newValue = currentValue === 'true' ? 'false' : 'true'
+    setSettingsSaving(true)
+    setSettingsError('')
+    setSettingsSavedMsg('')
+
+    try {
+      await updateSetting(token, key, newValue)
+      setSettings((prev) => ({ ...prev, [key]: newValue }))
+      setSettingsSavedMsg(t('settings.saved'))
+      setTimeout(() => setSettingsSavedMsg(''), 3000)
+    } catch (err) {
+      setSettingsError(err instanceof Error ? err.message : 'Failed to update setting')
+    } finally {
+      setSettingsSaving(false)
+    }
   }
 
   /* ------------------------------------------------------------------ */
@@ -572,7 +618,7 @@ export default function AdminPage() {
                   setLogsPage(1)
                 }}
               >
-                Clear
+                {t('logs.clear')}
               </button>
             )}
           </div>
@@ -635,7 +681,53 @@ export default function AdminPage() {
               </div>
             </div>
           ) : (
-            <div className={styles.emptyMsg}>No stats available.</div>
+            <div className={styles.emptyMsg}>{t('stats.noData')}</div>
+          )}
+        </div>
+      )}
+
+      {/* ---------- Settings ---------- */}
+      {activeTab === 'settings' && (
+        <div className={styles.section}>
+          {settingsLoading ? (
+            <div className={styles.loading}>{t('loading')}</div>
+          ) : (
+            <div className={styles.settingsGrid}>
+              <div className={styles.settingCard}>
+                <div className={styles.settingInfo}>
+                  <div className={styles.settingName}>{t('settings.requiresVerification')}</div>
+                  <div className={styles.settingDesc}>{t('settings.requiresVerification.desc')}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`${styles.toggleSwitch} ${settings.registration_requires_verification === 'true' ? styles.toggleSwitchActive : ''}`}
+                  onClick={() => handleSettingToggle('registration_requires_verification', settings.registration_requires_verification || 'true')}
+                  disabled={settingsSaving}
+                  aria-label={t('settings.requiresVerification')}
+                >
+                  <span className={`${styles.toggleKnob} ${settings.registration_requires_verification === 'true' ? styles.toggleKnobActive : ''}`} />
+                </button>
+              </div>
+
+              <div className={styles.settingCard}>
+                <div className={styles.settingInfo}>
+                  <div className={styles.settingName}>{t('settings.qqRegistration')}</div>
+                  <div className={styles.settingDesc}>{t('settings.qqRegistration.desc')}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`${styles.toggleSwitch} ${settings.qq_registration_enabled === 'true' ? styles.toggleSwitchActive : ''}`}
+                  onClick={() => handleSettingToggle('qq_registration_enabled', settings.qq_registration_enabled || 'false')}
+                  disabled={settingsSaving}
+                  aria-label={t('settings.qqRegistration')}
+                >
+                  <span className={`${styles.toggleKnob} ${settings.qq_registration_enabled === 'true' ? styles.toggleKnobActive : ''}`} />
+                </button>
+              </div>
+
+              {settingsError && <div className={styles.error}>{settingsError}</div>}
+              {settingsSavedMsg && <div className={styles.success}>{settingsSavedMsg}</div>}
+            </div>
           )}
         </div>
       )}
@@ -878,7 +970,7 @@ export default function AdminPage() {
                       }
                     }}
                   >
-                    {modelsFetching ? 'Fetching...' : 'Fetch Models'}
+                    {modelsFetching ? t('channels.fetching') : t('channels.fetchModels')}
                   </button>
                 </div>
               </div>

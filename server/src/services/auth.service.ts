@@ -1,23 +1,49 @@
 import db from '../db/index.js'
-import { hashPassword, verifyPassword, generateCode } from '../utils/crypto.js'
+import { hashPassword, verifyPassword, generateCode, generateApiKey } from '../utils/crypto.js'
 import { getRow } from '../db/helpers.js'
 import { sendVerificationCode } from '../utils/email.js'
-import { createUser, getUserByEmail, getUserById, updatePassword } from './user.service.js'
+import { getUserByEmail, getUserById, updatePassword, toPublic } from './user.service.js'
+import type { UserRow } from './user.service.js'
+import { getSetting } from './settings.service.js'
 import { createApiKey } from './api-key.service.js'
 import { AuthError, ValidationError } from '../utils/errors.js'
 
 const CODE_EXPIRY_MINUTES = 10
 
-export async function register(email: string, password: string, code: string, displayName?: string) {
-  const valid = verifyCode(email, code, 'register')
-  if (!valid) throw new ValidationError('Invalid or expired verification code')
+export async function register(email: string, password: string, code?: string, displayName?: string) {
+  const requiresVerification = getSetting('registration_requires_verification') !== 'false'
 
-  const user = await createUser(email, password, displayName)
-  const apiKey = createApiKey(user.id, 'default')
+  if (requiresVerification) {
+    if (!code) throw new ValidationError('Verification code is required')
+    const valid = verifyCode(email, code, 'register')
+    if (!valid) throw new ValidationError('Invalid or expired verification code')
+    markCodeUsed(email, code, 'register')
+  } else if (code) {
+    const valid = verifyCode(email, code, 'register')
+    if (valid) {
+      markCodeUsed(email, code, 'register')
+    }
+  }
 
-  markCodeUsed(email, code, 'register')
+  const passwordHash = await hashPassword(password)
 
-  return { user, apiKey: apiKey.fullKey }
+  const registerTx = db.transaction(() => {
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email)
+    if (existing) throw new ValidationError('Email already registered')
+
+    const result = db.prepare('INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)')
+      .run(email, passwordHash, displayName || email.split('@')[0])
+    const userId = Number(result.lastInsertRowid)
+
+    const key = generateApiKey()
+    db.prepare('INSERT INTO api_keys (user_id, key, name) VALUES (?, ?, ?)').run(userId, key, 'default')
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as UserRow
+    return { user: toPublic(user), fullKey: key }
+  })
+
+  const { user, fullKey } = registerTx()
+  return { user, apiKey: fullKey }
 }
 
 export async function login(email: string, password: string) {

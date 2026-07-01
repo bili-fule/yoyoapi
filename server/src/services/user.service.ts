@@ -27,7 +27,7 @@ export interface UserPublic {
   createdAt: string
 }
 
-function toPublic(row: UserRow): UserPublic {
+export function toPublic(row: UserRow): UserPublic {
   return {
     id: row.id,
     email: row.email,

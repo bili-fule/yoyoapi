@@ -50,7 +50,11 @@ export const config = {
   },
   admin: {
     email: env('ADMIN_EMAIL', 'admin@yoyoapi.com'),
-    password: env('ADMIN_PASSWORD', 'admin123456'),
+    password: (() => {
+      const pw = env('ADMIN_PASSWORD')
+      if (!pw) throw new Error('ADMIN_PASSWORD environment variable is required — set a strong password in .env')
+      return pw
+    })(),
   },
   qq: {
     botBaseUrl: env('QQ_BOT_BASE_URL'),

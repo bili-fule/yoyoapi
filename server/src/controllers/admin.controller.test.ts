@@ -467,3 +467,59 @@ describe('Admin Stats', () => {
     expect(res.body.todayUsage).toBe(0)
   })
 })
+
+// ─── Settings ──────────────────────────────────────────────────────────────────
+
+describe('Admin Settings', () => {
+  let adminKey: string
+
+  beforeEach(async () => {
+    adminKey = await seedAdmin()
+    db.exec('DELETE FROM settings')
+    db.exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('registration_requires_verification', 'true')")
+    db.exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('qq_registration_enabled', 'false')")
+  })
+
+  it('GET /admin/settings returns settings', async () => {
+    const res = await request(app)
+      .get('/admin/settings')
+      .set('Authorization', `Bearer ${adminKey}`)
+    expect(res.status).toBe(200)
+    expect(res.body.settings).toBeDefined()
+    expect(res.body.settings.registration_requires_verification).toBe('true')
+    expect(res.body.settings.qq_registration_enabled).toBe('false')
+  })
+
+  it('PUT /admin/settings updates a setting', async () => {
+    const res = await request(app)
+      .put('/admin/settings')
+      .set('Authorization', `Bearer ${adminKey}`)
+      .send({ key: 'registration_requires_verification', value: 'false' })
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Setting updated')
+    const getRes = await request(app)
+      .get('/admin/settings')
+      .set('Authorization', `Bearer ${adminKey}`)
+    expect(getRes.body.settings.registration_requires_verification).toBe('false')
+  })
+
+  it('PUT /admin/settings returns 401 without auth', async () => {
+    const res = await request(app)
+      .put('/admin/settings')
+      .send({ key: 'test', value: 'val' })
+    expect(res.status).toBe(401)
+  })
+
+  it('PUT /admin/settings returns 400 for missing key', async () => {
+    const res = await request(app)
+      .put('/admin/settings')
+      .set('Authorization', `Bearer ${adminKey}`)
+      .send({ value: 'val' })
+    expect(res.status).toBe(400)
+  })
+
+  it('GET /admin/settings returns 401 without auth', async () => {
+    const res = await request(app).get('/admin/settings')
+    expect(res.status).toBe(401)
+  })
+})

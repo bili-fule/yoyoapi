@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={styles.formCard}>
         <h1 className={styles.title}>{t('login.title')}</h1>
-        <p className={styles.description}>Sign in to your account to continue</p>
+        <p className={styles.description}>{t('login.description')}</p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}

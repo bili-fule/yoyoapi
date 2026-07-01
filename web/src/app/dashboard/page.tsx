@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth, type User } from '@/lib/auth-context'
 import { useI18n } from '@/lib/i18n'
 import {
@@ -26,9 +27,13 @@ interface ApiKeyItem {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { token, user, setUser } = useAuth()
 
-  if (!token || !user) return null
+  if (!token || !user) {
+    router.push('/login')
+    return null
+  }
 
   return <DashboardInner token={token} user={user} setUser={setUser} />
 }
@@ -200,6 +205,7 @@ function ApiKeysTab({ token }: { token: string }) {
   }
 
   async function handleDelete(id: number) {
+    if (!window.confirm(t('apikeys.confirmDelete'))) return
     setError('')
     try {
       await deleteApiKey(token, id)
@@ -227,7 +233,7 @@ function ApiKeysTab({ token }: { token: string }) {
           disabled={creating}
           onClick={handleCreate}
         >
-          {creating ? 'Creating...' : t('apikeys.create')}
+          {creating ? t('apikeys.creating') : t('apikeys.create')}
         </button>
       </div>
 
@@ -245,7 +251,7 @@ function ApiKeysTab({ token }: { token: string }) {
               <th>{t('apikeys.key')}</th>
               <th>{t('apikeys.status')}</th>
               <th>{t('apikeys.lastUsed')}</th>
-              <th>Actions</th>
+              <th>{t('apikeys.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -438,7 +444,7 @@ function SettingsTab({
               disabled={loading}
               onClick={handleBack}
             >
-              Back
+              {t('qq.back')}
             </button>
           </div>
         </>

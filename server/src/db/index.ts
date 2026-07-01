@@ -10,6 +10,7 @@ const db = new Database(config.dbPath)
 
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
+db.pragma('busy_timeout = 5000')
 
 export function initDB(): void {
   // Clean up orphan table from prior code version
@@ -26,7 +27,7 @@ export function initDB(): void {
       role INTEGER DEFAULT 1,
       quota INTEGER DEFAULT 0,
       used_quota INTEGER DEFAULT 0,
-      qq_id TEXT DEFAULT '',
+      qq_id TEXT DEFAULT NULL UNIQUE,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -77,14 +78,59 @@ export function initDB(): void {
       ip TEXT,
       success INTEGER DEFAULT 1,
       error_msg TEXT DEFAULT '',
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE SET NULL,
+      FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE SET NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_api_keys_key ON api_keys(key);
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_verify_codes_email ON verify_codes(email);
+    CREATE INDEX IF NOT EXISTS idx_verify_codes_lookup ON verify_codes(email, code, type, used);
+    CREATE INDEX IF NOT EXISTS idx_channels_type_status ON channels(type, status);
+    CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
+
+    UPDATE users SET qq_id = NULL WHERE qq_id = '';
+
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('registration_requires_verification', 'true');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('qq_registration_enabled', 'false');
   `)
+}
+
+// Periodic cleanup: remove expired verify_codes and old logs every hour
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
+const LOG_RETENTION_DAYS = 90
+
+function runCleanup(): void {
+  try {
+    db.prepare("DELETE FROM verify_codes WHERE expires_at < datetime('now')").run()
+    db.prepare(`DELETE FROM logs WHERE created_at < datetime('now', '-${LOG_RETENTION_DAYS} days')`).run()
+  } catch (err) {
+    console.error('[DB] Cleanup error:', err)
+  }
+}
+
+let cleanupTimer: ReturnType<typeof setInterval> | null = null
+
+export function startCleanup(): void {
+  stopCleanup()
+  cleanupTimer = setInterval(runCleanup, CLEANUP_INTERVAL_MS)
+  // Run first cleanup after 5 minutes (not immediately)
+  setTimeout(runCleanup, 5 * 60 * 1000)
+}
+
+export function stopCleanup(): void {
+  if (cleanupTimer) {
+    clearInterval(cleanupTimer)
+    cleanupTimer = null
+  }
 }
 
 export default db

@@ -20,5 +20,7 @@ router.post('/channels/fetch-models', asyncHandler(adminController.fetchModels))
 
 router.get('/logs', adminController.getLogs)
 router.get('/stats', adminController.getStats)
+router.get('/settings', adminController.getSettings)
+router.put('/settings', adminController.updateSetting)
 
 export default router

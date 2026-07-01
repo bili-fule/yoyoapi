@@ -93,7 +93,7 @@ export default function ResetPasswordPage() {
 
     try {
       await sendCode(email, 'reset')
-      setSuccessMsg('Reset code resent')
+      setSuccessMsg(t('reset.codeResent'))
       startCountdown()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to resend code')
@@ -108,8 +108,8 @@ export default function ResetPasswordPage() {
         <h1 className={styles.title}>{t('reset.title')}</h1>
         <p className={styles.description}>
           {step === 'code'
-            ? 'Enter your email to receive a reset code'
-            : 'Enter the code and choose a new password'}
+            ? t('reset.stepCode')
+            : t('reset.stepReset')}
         </p>
 
         {step === 'code' ? (

@@ -9,7 +9,7 @@ import type {
   ModelMap,
 } from './types.js'
 
-const DEFAULT_MODEL_MAP: ModelMap = {
+export const DEFAULT_MODEL_MAP: ModelMap = {
   'gpt-4o': 'gemini-2.5-flash',
   'gpt-4o-mini': 'gemini-2.5-flash',
   'gpt-4': 'gemini-2.5-flash',

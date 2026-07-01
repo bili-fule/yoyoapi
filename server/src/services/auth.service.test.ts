@@ -1,6 +1,7 @@
 import { initDB } from '../db/index.js'
 import db from '../db/index.js'
 import { register, login, sendCode, resetPassword } from './auth.service.js'
+import { setSetting } from './settings.service.js'
 
 function cleanDB(): void {
   db.pragma('foreign_keys = OFF')
@@ -9,6 +10,9 @@ function cleanDB(): void {
   db.prepare('DELETE FROM api_keys').run()
   db.prepare('DELETE FROM channels').run()
   db.prepare('DELETE FROM users').run()
+  db.prepare('DELETE FROM settings').run()
+  db.exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('registration_requires_verification', 'true')")
+  db.exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('qq_registration_enabled', 'false')")
   db.pragma('foreign_keys = ON')
 }
 
@@ -109,6 +113,48 @@ describe('register', () => {
     const code2 = getStoredCode('dup@test.com', 'register')
     await expect(register('dup@test.com', 'securePass1', code2))
       .rejects.toThrow('Email already registered')
+  })
+})
+
+describe('register with conditional verification', () => {
+  it('should succeed without code when verification is disabled', async () => {
+    setSetting('registration_requires_verification', 'false')
+
+    const result = await register('no-code@test.com', 'securePass1')
+
+    expect(result.user.email).toBe('no-code@test.com')
+    expect(result.apiKey).toMatch(/^sk-[0-9a-f]{64}$/)
+  })
+
+  it('should consume code when verification is disabled but code is provided', async () => {
+    setSetting('registration_requires_verification', 'false')
+    sendCode('code-opt@test.com', 'register')
+    const code = getStoredCode('code-opt@test.com', 'register')
+
+    const result = await register('code-opt@test.com', 'securePass1', code)
+
+    expect(result.user.email).toBe('code-opt@test.com')
+    const row = db.prepare('SELECT used FROM verify_codes WHERE email = ? AND code = ?')
+      .get('code-opt@test.com', code) as { used: number }
+    expect(row.used).toBe(1)
+  })
+
+  it('should reject without code when verification is required', async () => {
+    // registration_requires_verification defaults to 'true' via cleanDB
+
+    await expect(register('no-code@test.com', 'securePass1'))
+      .rejects.toThrow('Verification code is required')
+  })
+
+  it('should succeed with valid code when verification is required', async () => {
+    // registration_requires_verification defaults to 'true' via cleanDB
+    sendCode('with-code@test.com', 'register')
+    const code = getStoredCode('with-code@test.com', 'register')
+
+    const result = await register('with-code@test.com', 'securePass1', code)
+
+    expect(result.user.email).toBe('with-code@test.com')
+    expect(result.apiKey).toMatch(/^sk-[0-9a-f]{64}$/)
   })
 })
 

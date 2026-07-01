@@ -9,6 +9,7 @@ import { initDB } from './db/index.js'
 import { errorHandler } from './middleware/error.js'
 import routes from './routes/index.js'
 import { hashPassword } from './utils/crypto.js'
+import { startCleanup } from './db/index.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -16,6 +17,7 @@ initDB()
 
 const app = express()
 
+app.set('trust proxy', 1)
 app.use(helmet({ contentSecurityPolicy: false }))
 app.use(cors({ origin: config.corsOrigin }))
 app.use(morgan('short'))
@@ -45,6 +47,8 @@ async function bootstrap(): Promise<void> {
     `).run(config.admin.email, passwordHash, 'Admin')
     console.log(`Admin user created: ${config.admin.email}`)
   }
+
+  startCleanup()
 
   app.listen(config.port, config.host, () => {
     console.log(`Server running on http://${config.host}:${config.port}`)

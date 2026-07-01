@@ -34,6 +34,7 @@ export const zh: Record<TranslationKey, string> = {
   'auth.codeSent': '验证码已发送至 {email}',
   'auth.resend': '重新发送',
   'auth.resendIn': '{s} 秒后重新发送',
+  'auth.codeResent': '验证码已重新发送',
   'auth.or': '或',
 
   // Login
@@ -43,6 +44,7 @@ export const zh: Record<TranslationKey, string> = {
   'login.forgot': '忘记密码？',
   'login.noAccount': '还没有账号？',
   'login.register': '注册',
+  'login.description': '登录您的账号以继续',
 
   // Register
   'register.title': '创建账号',
@@ -50,6 +52,8 @@ export const zh: Record<TranslationKey, string> = {
   'register.creating': '创建中...',
   'register.haveAccount': '已有账号？',
   'register.signIn': '登录',
+  'register.stepCode': '输入邮箱开始注册',
+  'register.stepRegister': '输入验证码并设置密码',
 
   // Reset Password
   'reset.title': '重置密码',
@@ -58,6 +62,9 @@ export const zh: Record<TranslationKey, string> = {
   'reset.resetting': '重置中...',
   'reset.rememberPassword': '记得密码？',
   'reset.signIn': '登录',
+  'reset.stepCode': '输入邮箱以接收重置码',
+  'reset.stepReset': '输入重置码并设置新密码',
+  'reset.codeResent': '重置码已重新发送',
 
   // Dashboard
   'dashboard.title': '控制台',
@@ -95,6 +102,9 @@ export const zh: Record<TranslationKey, string> = {
   'apikeys.copy': '复制',
   'apikeys.copied': '已复制',
   'apikeys.dismiss': '完成',
+  'apikeys.creating': '创建中...',
+  'apikeys.actions': '操作',
+  'apikeys.confirmDelete': '确定要删除此 API 密钥吗？',
 
   // Dashboard - Settings / QQ Bind
   'qq.bind': '绑定 QQ',
@@ -109,6 +119,7 @@ export const zh: Record<TranslationKey, string> = {
   'qq.bound': '已绑定 QQ',
   'qq.boundSuccess': 'QQ 绑定成功',
   'qq.unboundSuccess': 'QQ 解绑成功',
+  'qq.back': '返回',
 
   // Admin
   'admin.title': '管理面板',
@@ -116,6 +127,13 @@ export const zh: Record<TranslationKey, string> = {
   'admin.tab.channels': '通道',
   'admin.tab.logs': '日志',
   'admin.tab.stats': '统计',
+  'admin.tab.settings': '系统设置',
+  'settings.requiresVerification': '注册需要验证码',
+  'settings.requiresVerification.desc': '关闭后，用户注册无需邮箱验证码',
+  'settings.qqRegistration': 'QQ 注册',
+  'settings.qqRegistration.desc': '启用后可通过 QQ 机器人注册。需要配置 QQ_BOT_BASE_URL',
+  'settings.notConfigured': '(未配置机器人)',
+  'settings.saved': '设置已更新',
   'admin.accessDenied': '访问被拒',
   'admin.accessDenied.desc': '你没有管理员权限。',
 
@@ -159,6 +177,8 @@ export const zh: Record<TranslationKey, string> = {
   'channels.cancel': '取消',
   'channels.save': '保存',
   'channels.saving': '保存中...',
+  'channels.fetching': '获取中...',
+  'channels.fetchModels': '获取模型',
 
   // Admin - Logs
   'logs.id': 'ID',
@@ -174,10 +194,12 @@ export const zh: Record<TranslationKey, string> = {
   'logs.next': '下一页',
   'logs.page': '第 {current} / {total} 页',
   'logs.noLogs': '暂无日志。',
+  'logs.clear': '清除',
 
   // Admin - Stats
   'stats.totalUsers': '总用户数',
   'stats.todayUsage': '今日用量',
+  'stats.noData': '暂无统计数据。',
 
   // 404
   'notFound.title': '页面未找到',

@@ -14,25 +14,39 @@ import {
   openaiToAnthropicRequest,
   anthropicToOpenAIResponse,
   anthropicStreamToOpenAIChunk,
+  DEFAULT_MODEL_MAP as ANTHROPIC_MODEL_MAP,
 } from './anthropic.js'
 import {
   openaiToGeminiRequest,
   geminiToOpenAIResponse,
   geminiStreamChunkToOpenAI,
+  DEFAULT_MODEL_MAP as GEMINI_MODEL_MAP,
 } from './gemini.js'
 
 export function convertRequest(
   oaiReq: OpenAIRequest,
   targetFormat: TargetFormat,
   modelMap?: ModelMap,
-): { body: unknown; format: TargetFormat } {
+): { body: unknown; format: TargetFormat; mappedModel?: string } {
   switch (targetFormat) {
     case 'openai':
       return { body: passthroughRequest(oaiReq), format: 'openai' }
-    case 'anthropic':
-      return { body: openaiToAnthropicRequest(oaiReq, modelMap), format: 'anthropic' }
-    case 'gemini':
-      return { body: openaiToGeminiRequest(oaiReq, modelMap), format: 'gemini' }
+    case 'anthropic': {
+      const map = modelMap ?? ANTHROPIC_MODEL_MAP
+      return {
+        body: openaiToAnthropicRequest(oaiReq, modelMap),
+        format: 'anthropic',
+        mappedModel: map[oaiReq.model] ?? oaiReq.model,
+      }
+    }
+    case 'gemini': {
+      const map = modelMap ?? GEMINI_MODEL_MAP
+      return {
+        body: openaiToGeminiRequest(oaiReq, modelMap),
+        format: 'gemini',
+        mappedModel: map[oaiReq.model] ?? oaiReq.model,
+      }
+    }
     default:
       return { body: passthroughRequest(oaiReq), format: 'openai' }
   }

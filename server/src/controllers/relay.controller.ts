@@ -2,8 +2,9 @@ import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { TargetFormat, OpenAIRequest } from '../converters/types.js'
 import { relayChatCompletion, deductQuota, logUsage, type LogEntry, type RelayResult } from '../services/relay.service.js'
+import db from '../db/index.js'
 import { getEnabledChannelsByType } from '../services/channel.service.js'
-import { convertStreamChunk } from '../converters/index.js'
+import { convertStreamChunk, convertRequest } from '../converters/index.js'
 import { formatStreamChunkSSE, formatDoneSSE } from '../converters/openai.js'
 
 function tryExtractUsage(data: unknown): { promptTokens: number; completionTokens: number } | null {
@@ -53,12 +54,13 @@ export async function chatCompletion(req: AuthenticatedRequest, res: Response): 
   const channel = channels[0]!
 
   try {
+    const { mappedModel } = convertRequest(oaiReq, targetFormat)
     const result = await relayChatCompletion(oaiReq, {
       apiKeyId: req.apiKeyId,
       userId: req.user.id,
       targetFormat,
       channelId: channel.id,
-      model: oaiReq.model,
+      model: mappedModel ?? oaiReq.model,
     })
 
     if ('stream' in result) {
@@ -92,6 +94,22 @@ async function handleStreamingResponse(
   let promptTokens = 0
   let completionTokens = 0
 
+  let streamTimeout: ReturnType<typeof setTimeout> | undefined
+
+  const clearStreamTimeout = (): void => {
+    if (streamTimeout) {
+      clearTimeout(streamTimeout)
+      streamTimeout = undefined
+    }
+  }
+
+  const resetStreamTimeout = (): void => {
+    clearStreamTimeout()
+    streamTimeout = setTimeout(() => {
+      reader.cancel().catch(() => {})
+    }, 60000)
+  }
+
   const processLine = (line: string): void => {
     if (!line.startsWith('data: ')) return
     const data = line.slice(6).trim()
@@ -121,7 +139,9 @@ async function handleStreamingResponse(
 
   try {
     while (true) {
+      resetStreamTimeout()
       const { done, value } = await reader.read()
+      clearStreamTimeout()
       if (done) break
 
       buffer += decoder.decode(value, { stream: true })
@@ -137,7 +157,9 @@ async function handleStreamingResponse(
       processLine(buffer.trim())
     }
   } catch {
-    // upstream stream error — end gracefully
+    // upstream stream error or idle timeout — end gracefully
+  } finally {
+    clearStreamTimeout()
   }
 
   res.end()
@@ -152,8 +174,10 @@ async function handleStreamingResponse(
     completionTokens,
     success: true,
   }
-  deductQuota(usage.userId, usage.promptTokens, usage.completionTokens)
-  logUsage(usage)
+  db.transaction(() => {
+    deductQuota(usage.userId, usage.promptTokens, usage.completionTokens)
+    logUsage(usage)
+  })()
 }
 
 export function listModels(_req: Request, res: Response): void {

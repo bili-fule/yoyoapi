@@ -8,7 +8,7 @@ import type {
   ModelMap,
 } from './types.js'
 
-const DEFAULT_MODEL_MAP: ModelMap = {
+export const DEFAULT_MODEL_MAP: ModelMap = {
   'gpt-4o': 'claude-sonnet-4-20250514',
   'gpt-4o-mini': 'claude-haiku-3-5-sonnet-20241022',
   'gpt-4': 'claude-sonnet-4-20250514',

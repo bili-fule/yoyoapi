@@ -32,6 +32,7 @@ export const en = {
   'auth.codeSent': 'Verification code sent to {email}',
   'auth.resend': 'Resend code',
   'auth.resendIn': 'Resend code in {s}s',
+  'auth.codeResent': 'Verification code resent',
   'auth.or': 'or',
 
   // Login
@@ -41,6 +42,7 @@ export const en = {
   'login.forgot': 'Forgot password?',
   'login.noAccount': "Don't have an account?",
   'login.register': 'Register',
+  'login.description': 'Sign in to your account to continue',
 
   // Register
   'register.title': 'Create Account',
@@ -48,6 +50,8 @@ export const en = {
   'register.creating': 'Creating...',
   'register.haveAccount': 'Already have an account?',
   'register.signIn': 'Sign In',
+  'register.stepCode': 'Enter your email to get started',
+  'register.stepRegister': 'Enter the verification code and set a password',
 
   // Reset Password
   'reset.title': 'Reset Password',
@@ -56,6 +60,9 @@ export const en = {
   'reset.resetting': 'Resetting...',
   'reset.rememberPassword': 'Remember your password?',
   'reset.signIn': 'Sign In',
+  'reset.stepCode': 'Enter your email to receive a reset code',
+  'reset.stepReset': 'Enter the code and choose a new password',
+  'reset.codeResent': 'Reset code resent',
 
   // Dashboard
   'dashboard.title': 'Dashboard',
@@ -93,6 +100,9 @@ export const en = {
   'apikeys.copy': 'Copy',
   'apikeys.copied': 'Copied!',
   'apikeys.dismiss': 'Done',
+  'apikeys.creating': 'Creating...',
+  'apikeys.actions': 'Actions',
+  'apikeys.confirmDelete': 'Are you sure you want to delete this API key?',
 
   // Dashboard - Settings / QQ Bind
   'qq.bind': 'Bind QQ',
@@ -107,6 +117,7 @@ export const en = {
   'qq.bound': 'QQ Bound',
   'qq.boundSuccess': 'QQ bound successfully',
   'qq.unboundSuccess': 'QQ unbound successfully',
+  'qq.back': 'Back',
 
   // Admin
   'admin.title': 'Admin Panel',
@@ -114,6 +125,13 @@ export const en = {
   'admin.tab.channels': 'Channels',
   'admin.tab.logs': 'Logs',
   'admin.tab.stats': 'Stats',
+  'admin.tab.settings': 'Settings',
+  'settings.requiresVerification': 'Registration Requires Verification',
+  'settings.requiresVerification.desc': 'When disabled, users can register without email verification code.',
+  'settings.qqRegistration': 'QQ Registration',
+  'settings.qqRegistration.desc': 'Enable registration via QQ bot. Requires QQ_BOT_BASE_URL configured.',
+  'settings.notConfigured': '(bot not configured)',
+  'settings.saved': 'Settings updated',
   'admin.accessDenied': 'Access Denied',
   'admin.accessDenied.desc': 'You do not have admin privileges.',
 
@@ -157,6 +175,8 @@ export const en = {
   'channels.cancel': 'Cancel',
   'channels.save': 'Save',
   'channels.saving': 'Saving...',
+  'channels.fetching': 'Fetching...',
+  'channels.fetchModels': 'Fetch Models',
 
   // Admin - Logs
   'logs.id': 'ID',
@@ -172,10 +192,12 @@ export const en = {
   'logs.next': 'Next',
   'logs.page': 'Page {current} of {total}',
   'logs.noLogs': 'No logs found.',
+  'logs.clear': 'Clear',
 
   // Admin - Stats
   'stats.totalUsers': 'Total Users',
   'stats.todayUsage': "Today's Usage",
+  'stats.noData': 'No stats available.',
 
   // 404
   'notFound.title': 'Page Not Found',

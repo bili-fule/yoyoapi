@@ -37,7 +37,7 @@ export async function sendVerificationCode(email: string, code: string): Promise
     })
     return true
   } catch (err) {
-    console.error('Failed to send email:', err)
+    console.error(`[EMAIL] Failed to send verification code to ${email}:`, err instanceof Error ? err.message : err)
     return false
   }
 }

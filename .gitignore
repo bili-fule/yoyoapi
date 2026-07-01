@@ -12,4 +12,7 @@ web/.next/
 *.log
 login.json
 *.tsbuildinfo
+*.png
+login-page.txt
+.playwright-mcp/
 

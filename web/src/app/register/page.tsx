@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
     try {
       await sendCode(email, 'register')
-      setSuccessMsg('Verification code resent')
+      setSuccessMsg(t('auth.codeResent'))
       startCountdown()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to resend code')
@@ -111,8 +111,8 @@ export default function RegisterPage() {
         <h1 className={styles.title}>{t('register.title')}</h1>
         <p className={styles.description}>
           {step === 'code'
-            ? 'Enter your email to get started'
-            : 'Enter the verification code and set a password'}
+            ? t('register.stepCode')
+            : t('register.stepRegister')}
         </p>
 
         {step === 'code' ? (

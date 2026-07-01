@@ -5,7 +5,7 @@ import * as authService from '../services/auth.service.js'
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  code: z.string().length(6),
+  code: z.string().length(6).optional(),
   displayName: z.string().optional(),
 })
 

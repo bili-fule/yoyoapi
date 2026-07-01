@@ -4,6 +4,7 @@ import * as userService from '../services/user.service.js'
 import * as channelService from '../services/channel.service.js'
 import db from '../db/index.js'
 import { getRow } from '../db/helpers.js'
+import * as settingsService from '../services/settings.service.js'
 
 export function listUsers(req: Request, res: Response): void {
   const page = parseInt(req.query.page as string) || 1
@@ -42,9 +43,12 @@ export function deleteUser(req: Request, res: Response): void {
     res.status(404).json({ error: { message: 'User not found' } })
     return
   }
-  db.prepare('DELETE FROM api_keys WHERE user_id = ?').run(id)
-  db.prepare('UPDATE logs SET user_id = NULL, api_key_id = NULL WHERE user_id = ?').run(id)
-  db.prepare('DELETE FROM users WHERE id = ?').run(id)
+  const deleteUserTx = db.transaction(() => {
+    db.prepare('DELETE FROM api_keys WHERE user_id = ?').run(id)
+    db.prepare('UPDATE logs SET user_id = NULL, api_key_id = NULL WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM users WHERE id = ?').run(id)
+  })
+  deleteUserTx()
   res.json({ message: 'User deleted' })
 }
 
@@ -186,4 +190,20 @@ export function getStats(_req: Request, res: Response): void {
     totalUsers,
     todayUsage,
   })
+}
+
+export function getSettings(_req: Request, res: Response): void {
+  const settings = settingsService.getAllSettings()
+  res.json({ settings })
+}
+
+const updateSettingSchema = z.object({
+  key: z.string().min(1, 'Key is required'),
+  value: z.string(),
+})
+
+export function updateSetting(req: Request, res: Response): void {
+  const { key, value } = updateSettingSchema.parse(req.body)
+  settingsService.setSetting(key, value)
+  res.json({ message: 'Setting updated' })
 }
