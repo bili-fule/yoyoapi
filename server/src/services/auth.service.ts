@@ -48,7 +48,7 @@ export async function login(email: string, password: string) {
 
 export function sendCode(email: string, type: 'register' | 'reset') {
   const code = generateCode()
-  const expiresAt = new Date(Date.now() + CODE_EXPIRY_MINUTES * 60 * 1000).toISOString()
+  const expiresAt = getSqliteDateTime(Date.now() + CODE_EXPIRY_MINUTES * 60 * 1000)
 
   db.prepare('INSERT INTO verify_codes (email, code, type, expires_at) VALUES (?, ?, ?, ?)')
     .run(email, code, type, expiresAt)
@@ -80,4 +80,8 @@ function verifyCode(email: string, code: string, type: string): boolean {
 function markCodeUsed(email: string, code: string, type: string): void {
   db.prepare('UPDATE verify_codes SET used = 1 WHERE email = ? AND code = ? AND type = ?')
     .run(email, code, type)
+}
+
+function getSqliteDateTime(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 19).replace('T', ' ')
 }
