@@ -32,4 +32,8 @@ export function clearExpiredEntries(): void {
   }
 }
 
+export function clearRateLimitStore(): void {
+  store.clear()
+}
+
 setInterval(clearExpiredEntries, 60_000)

@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/error.js'
 import routes from './routes/index.js'
 import db from './db/index.js'
 import { hashPassword, generateApiKey } from './utils/crypto.js'
+import { clearRateLimitStore } from './middleware/rate-limit.js'
 
 let app: express.Express
 
@@ -31,6 +32,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   cleanDB()
+  clearRateLimitStore()
 })
 
 describe('API Integration', () => {
@@ -77,6 +79,31 @@ describe('API Integration', () => {
       .post('/api/auth/login')
       .send({ email: 'login@test.com', password: 'wrong' })
     expect(res.status).toBe(401)
+  })
+
+  it('POST /api/auth/reset-password resets password with valid code', async () => {
+    const pwHash = await hashPassword('oldpass123')
+    db.prepare('INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)')
+      .run('reset@test.com', pwHash, 'Test')
+
+    const sendRes = await request(app)
+      .post('/api/auth/send-code')
+      .send({ email: 'reset@test.com', type: 'reset' })
+    expect(sendRes.status).toBe(200)
+
+    const row = db.prepare('SELECT code FROM verify_codes WHERE email = ? AND type = ? ORDER BY id DESC LIMIT 1')
+      .get('reset@test.com', 'reset') as { code: string }
+
+    const resetRes = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ email: 'reset@test.com', code: row.code, newPassword: 'newpass456' })
+    expect(resetRes.status).toBe(200)
+
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'reset@test.com', password: 'newpass456' })
+    expect(loginRes.status).toBe(200)
+    expect(loginRes.body.user.email).toBe('reset@test.com')
   })
 
   it('GET /api/user/profile with valid API key', async () => {
